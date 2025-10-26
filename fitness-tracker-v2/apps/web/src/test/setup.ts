@@ -58,11 +58,15 @@ const sessionStorageMock = {
 };
 global.sessionStorage = sessionStorageMock;
 
-// Mock crypto.randomUUID
-global.crypto = {
-  ...global.crypto,
-  randomUUID: vi.fn(() => 'mock-uuid-123'),
-};
+// 
+Object.defineProperty(global, 'crypto', {
+  value: {
+    ...global.crypto,
+    randomUUID: vi.fn(() => 'mock-uuid-123'),
+  },
+  writable: true,
+  configurable: true,
+});
 
 // Mock Firebase
 vi.mock('firebase/app', () => ({
