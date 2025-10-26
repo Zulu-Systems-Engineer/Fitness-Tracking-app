@@ -1,0 +1,81 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - heading "Fitness Tracker" [level=1] [ref=e6]
+      - button "Toggle theme" [ref=e7] [cursor=pointer]:
+        - img [ref=e8]
+  - main [ref=e10]:
+    - generic [ref=e12]:
+      - generic [ref=e14]:
+        - heading "Workout Plans" [level=1] [ref=e15]
+        - paragraph [ref=e16]: Create and manage your workout routines
+      - generic [ref=e17]:
+        - generic [ref=e18]:
+          - combobox [ref=e19]:
+            - option "All Difficulties" [selected]
+            - option "Beginner"
+            - option "Intermediate"
+            - option "Advanced"
+          - combobox [ref=e20]:
+            - option "All Categories" [selected]
+            - option "Strength"
+            - option "Cardio"
+            - option "Flexibility"
+            - option "Mixed"
+          - textbox "Search plans..." [ref=e21]
+        - button "Create New Plan" [ref=e22] [cursor=pointer]
+      - generic [ref=e23]:
+        - generic [ref=e24]:
+          - generic [ref=e25]:
+            - heading "Beginner Full Body" [level=3] [ref=e26]
+            - generic [ref=e27]:
+              - button [ref=e28] [cursor=pointer]:
+                - img [ref=e29]
+              - button [ref=e31] [cursor=pointer]:
+                - img [ref=e32]
+          - paragraph [ref=e34]: A complete full-body workout for beginners
+          - generic [ref=e35]:
+            - generic [ref=e36]:
+              - generic [ref=e37]: "Difficulty:"
+              - generic [ref=e38]: Beginner
+            - generic [ref=e39]:
+              - generic [ref=e40]: "Category:"
+              - generic [ref=e41]: strength
+            - generic [ref=e42]:
+              - generic [ref=e43]: "Duration:"
+              - generic [ref=e44]: 30 min
+            - generic [ref=e45]:
+              - generic [ref=e46]: "Exercises:"
+              - generic [ref=e47]: "2"
+          - generic [ref=e48]:
+            - button "Start Workout" [ref=e49] [cursor=pointer]
+            - button "View Details" [ref=e50] [cursor=pointer]
+        - generic [ref=e51]:
+          - generic [ref=e52]:
+            - heading "Advanced HIIT" [level=3] [ref=e53]
+            - generic [ref=e54]:
+              - button [ref=e55] [cursor=pointer]:
+                - img [ref=e56]
+              - button [ref=e58] [cursor=pointer]:
+                - img [ref=e59]
+          - paragraph [ref=e61]: High-intensity interval training for advanced users
+          - generic [ref=e62]:
+            - generic [ref=e63]:
+              - generic [ref=e64]: "Difficulty:"
+              - generic [ref=e65]: Advanced
+            - generic [ref=e66]:
+              - generic [ref=e67]: "Category:"
+              - generic [ref=e68]: cardio
+            - generic [ref=e69]:
+              - generic [ref=e70]: "Duration:"
+              - generic [ref=e71]: 45 min
+            - generic [ref=e72]:
+              - generic [ref=e73]: "Exercises:"
+              - generic [ref=e74]: "2"
+          - generic [ref=e75]:
+            - button "Start Workout" [ref=e76] [cursor=pointer]
+            - button "View Details" [ref=e77] [cursor=pointer]
+```

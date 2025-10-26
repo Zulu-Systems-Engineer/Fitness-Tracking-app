@@ -1,0 +1,62 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - heading "Fitness Tracker" [level=1] [ref=e6]
+      - button "Toggle theme" [ref=e7] [cursor=pointer]:
+        - img [ref=e8]
+  - main [ref=e10]:
+    - generic [ref=e11]:
+      - generic [ref=e13]:
+        - heading "SIGN UP" [level=1] [ref=e15]
+        - generic [ref=e17]:
+          - generic [ref=e18]:
+            - generic [ref=e19]: Full Name
+            - generic [ref=e20]:
+              - textbox "Full Name" [ref=e21]:
+                - /placeholder: Enter your full name
+              - generic [ref=e22]: "***"
+          - generic [ref=e23]:
+            - generic [ref=e24]: Email
+            - generic [ref=e25]:
+              - textbox "Email" [ref=e26]:
+                - /placeholder: Enter your email
+              - generic [ref=e27]: "***"
+          - generic [ref=e28]:
+            - generic [ref=e29]: Password
+            - generic [ref=e30]:
+              - textbox "Password" [ref=e31]:
+                - /placeholder: Enter your password
+              - generic [ref=e32]:
+                - button [ref=e33] [cursor=pointer]:
+                  - img [ref=e34]
+                - generic [ref=e37]: "***"
+          - generic [ref=e38]:
+            - generic [ref=e39]: Confirm Password
+            - generic [ref=e40]:
+              - textbox "Confirm Password" [ref=e41]:
+                - /placeholder: Confirm your password
+              - generic [ref=e42]:
+                - button [ref=e43] [cursor=pointer]:
+                  - img [ref=e44]
+                - generic [ref=e47]: "***"
+          - generic [ref=e48]:
+            - checkbox "I agree to the Terms and Conditions and Privacy Policy" [ref=e49]
+            - generic [ref=e50]: I agree to the Terms and Conditions and Privacy Policy
+          - button "SIGN UP" [ref=e51] [cursor=pointer]
+          - generic [ref=e56]: Or Continue With
+          - button "Google" [ref=e58] [cursor=pointer]:
+            - img [ref=e59]
+            - generic [ref=e64]: Google
+          - paragraph [ref=e66]:
+            - text: Already have an account?
+            - link "Login" [ref=e67] [cursor=pointer]:
+              - /url: /login
+      - generic [ref=e69]:
+        - img "Fitness training session with personal trainer and client doing push-ups" [ref=e70]
+        - generic [ref=e73]:
+          - heading "Join Our Community" [level=3] [ref=e74]
+          - paragraph [ref=e75]: Start your fitness journey today
+```

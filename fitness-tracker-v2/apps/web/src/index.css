@@ -1,0 +1,154 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Glassmorphism and gradient styles */
+.glassmorphism {
+  background: var(--glassmorphism-bg, rgba(255, 255, 255, 0.1));
+  backdrop-filter: blur(var(--glassmorphism-blur, 20px));
+  -webkit-backdrop-filter: blur(var(--glassmorphism-blur, 20px));
+  border: 1px solid var(--glassmorphism-border, rgba(255, 255, 255, 0.2));
+  box-shadow: var(--glassmorphism-shadow, 0 8px 32px 0 rgba(31, 38, 135, 0.37));
+}
+
+.glassmorphism:hover {
+  background: var(--glassmorphism-bg-hover, rgba(248, 250, 252, 0.85));
+  border-color: var(--glassmorphism-border-hover, rgba(203, 213, 225, 0.8));
+  box-shadow: var(--glassmorphism-shadow-hover, 0 8px 32px 0 rgba(15, 23, 42, 0.12));
+}
+
+.gradient-bg {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+}
+
+.gradient-bg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 20% 50%, rgba(132, 204, 22, 0.1) 0%, transparent 50%),
+              radial-gradient(circle at 80% 20%, rgba(71, 85, 105, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* New gradient classes from color scheme */
+.primary-gradient {
+  background: linear-gradient(135deg, #475569 0%, #1e293b 100%);
+}
+
+.accent-gradient {
+  background: linear-gradient(135deg, #a3e635 0%, #84cc16 100%);
+}
+
+.hero-gradient {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+}
+
+.card-gradient {
+  background: linear-gradient(to bottom right, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.glass-gradient {
+  background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.6) 100%);
+}
+
+/* Navigation button hover effects */
+.nav-button:hover {
+  color: var(--glassmorphism-text-secondary) !important;
+}
+
+/* Consistent text color system using glassmorphism variables */
+.text-primary {
+  color: var(--glassmorphism-text) !important;
+}
+
+.text-secondary {
+  color: var(--glassmorphism-text-secondary) !important;
+}
+
+.text-muted {
+  color: var(--glassmorphism-text-muted) !important;
+}
+
+.text-white {
+  color: #ffffff !important;
+}
+
+/* High contrast text styles for better visibility (login/signup pages) */
+.high-contrast-text {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
+}
+
+.high-contrast-label {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
+}
+
+.high-contrast-input::placeholder {
+  color: rgba(0, 0, 0, 0.8) !important;
+  font-weight: 600 !important;
+  opacity: 1 !important;
+}
+
+.high-contrast-input {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border: 2px solid rgba(255, 255, 255, 0.8) !important;
+  color: #000000 !important;
+  font-weight: 600 !important;
+}
+
+.high-contrast-input:focus {
+  background: rgba(255, 255, 255, 1) !important;
+  border: 2px solid #ffffff !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3) !important;
+  color: #000000 !important;
+}
+
+/* Custom styles for theme variables */
+:root {
+  /* These will be set dynamically by the theme system */
+  --background-primary: #ffffff;
+  --background-secondary: #f0f9ff;
+  --background-tertiary: #eff6ff;
+  --text-primary: #000000;
+  --text-secondary: #171717;
+  --text-muted: #525252;
+  --border-default: #e5e5e5;
+  --border-focus: #3b82f6;
+  --card-bg: #ffffff;
+  --card-border: #e5e5e5;
+  --input-bg: #ffffff;
+  --input-border: #e5e5e5;
+  --input-text: #000000;
+  --input-placeholder: #a3a3a3;
+  --button-primary-bg: #3b82f6;
+  --button-primary-text: #ffffff;
+  --button-primary-hover: #2563eb;
+  --button-primary-active: #1d4ed8;
+}
+
+.dark {
+  --background-primary: #0a0a0a;
+  --background-secondary: #171717;
+  --background-tertiary: #262626;
+  --text-primary: #ffffff;
+  --text-secondary: #fafafa;
+  --text-muted: #a3a3a3;
+  --border-default: #404040;
+  --border-focus: #3b82f6;
+  --card-bg: #171717;
+  --card-border: #404040;
+  --input-bg: #262626;
+  --input-border: #404040;
+  --input-text: #ffffff;
+  --input-placeholder: #737373;
+  --button-primary-bg: #3b82f6;
+  --button-primary-text: #ffffff;
+  --button-primary-hover: #2563eb;
+  --button-primary-active: #1d4ed8;
+}

@@ -1,0 +1,144 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - heading "Fitness Tracker" [level=1] [ref=e6]
+      - button "Toggle theme" [ref=e7] [cursor=pointer]:
+        - img [ref=e8]
+  - main [ref=e10]:
+    - generic [ref=e11]:
+      - generic [ref=e12]:
+        - generic [ref=e14]:
+          - heading "Workout Plans" [level=1] [ref=e15]
+          - paragraph [ref=e16]: Create and manage your workout routines
+        - generic [ref=e17]:
+          - generic [ref=e18]:
+            - combobox [ref=e19]:
+              - option "All Difficulties" [selected]
+              - option "Beginner"
+              - option "Intermediate"
+              - option "Advanced"
+            - combobox [ref=e20]:
+              - option "All Categories" [selected]
+              - option "Strength"
+              - option "Cardio"
+              - option "Flexibility"
+              - option "Mixed"
+            - textbox "Search plans..." [ref=e21]
+          - button "Create New Plan" [active] [ref=e22] [cursor=pointer]
+        - generic [ref=e23]:
+          - generic [ref=e24]:
+            - generic [ref=e25]:
+              - heading "Beginner Full Body" [level=3] [ref=e26]
+              - generic [ref=e27]:
+                - button [ref=e28] [cursor=pointer]:
+                  - img [ref=e29]
+                - button [ref=e31] [cursor=pointer]:
+                  - img [ref=e32]
+            - paragraph [ref=e34]: A complete full-body workout for beginners
+            - generic [ref=e35]:
+              - generic [ref=e36]:
+                - generic [ref=e37]: "Difficulty:"
+                - generic [ref=e38]: Beginner
+              - generic [ref=e39]:
+                - generic [ref=e40]: "Category:"
+                - generic [ref=e41]: strength
+              - generic [ref=e42]:
+                - generic [ref=e43]: "Duration:"
+                - generic [ref=e44]: 30 min
+              - generic [ref=e45]:
+                - generic [ref=e46]: "Exercises:"
+                - generic [ref=e47]: "2"
+            - generic [ref=e48]:
+              - button "Start Workout" [ref=e49] [cursor=pointer]
+              - button "View Details" [ref=e50] [cursor=pointer]
+          - generic [ref=e51]:
+            - generic [ref=e52]:
+              - heading "Advanced HIIT" [level=3] [ref=e53]
+              - generic [ref=e54]:
+                - button [ref=e55] [cursor=pointer]:
+                  - img [ref=e56]
+                - button [ref=e58] [cursor=pointer]:
+                  - img [ref=e59]
+            - paragraph [ref=e61]: High-intensity interval training for advanced users
+            - generic [ref=e62]:
+              - generic [ref=e63]:
+                - generic [ref=e64]: "Difficulty:"
+                - generic [ref=e65]: Advanced
+              - generic [ref=e66]:
+                - generic [ref=e67]: "Category:"
+                - generic [ref=e68]: cardio
+              - generic [ref=e69]:
+                - generic [ref=e70]: "Duration:"
+                - generic [ref=e71]: 45 min
+              - generic [ref=e72]:
+                - generic [ref=e73]: "Exercises:"
+                - generic [ref=e74]: "2"
+            - generic [ref=e75]:
+              - button "Start Workout" [ref=e76] [cursor=pointer]
+              - button "View Details" [ref=e77] [cursor=pointer]
+      - generic [ref=e80]:
+        - generic [ref=e81]:
+          - heading "Create New Workout Plan" [level=2] [ref=e82]
+          - button [ref=e83] [cursor=pointer]:
+            - img [ref=e84]
+        - generic [ref=e86]:
+          - generic [ref=e87]:
+            - generic [ref=e88]:
+              - generic [ref=e89]: Plan Name
+              - textbox [ref=e90]
+            - generic [ref=e91]:
+              - generic [ref=e92]: Duration (minutes)
+              - spinbutton [ref=e93]: "30"
+          - generic [ref=e94]:
+            - generic [ref=e95]: Description
+            - textbox [ref=e96]
+          - generic [ref=e97]:
+            - generic [ref=e98]:
+              - generic [ref=e99]: Difficulty
+              - combobox [ref=e100]:
+                - option "Beginner" [selected]
+                - option "Intermediate"
+                - option "Advanced"
+            - generic [ref=e101]:
+              - generic [ref=e102]: Category
+              - combobox [ref=e103]:
+                - option "Strength" [selected]
+                - option "Cardio"
+                - option "Flexibility"
+                - option "Mixed"
+          - generic [ref=e104]:
+            - checkbox "Make this plan public" [ref=e105]
+            - generic [ref=e106]: Make this plan public
+          - generic [ref=e107]:
+            - generic [ref=e108]:
+              - heading "Exercises" [level=3] [ref=e109]
+              - button "Add Exercise" [ref=e110] [cursor=pointer]
+            - generic [ref=e112]:
+              - heading "Exercise 1" [level=4] [ref=e114]
+              - generic [ref=e115]:
+                - generic [ref=e116]:
+                  - generic [ref=e117]: Exercise Name
+                  - textbox [ref=e118]
+                - generic [ref=e119]:
+                  - generic [ref=e120]: Sets
+                  - spinbutton [ref=e121]: "1"
+                - generic [ref=e122]:
+                  - generic [ref=e123]: Reps
+                  - spinbutton [ref=e124]: "1"
+                - generic [ref=e125]:
+                  - generic [ref=e126]: Weight (lbs)
+                  - spinbutton [ref=e127]: "0"
+              - generic [ref=e128]:
+                - generic [ref=e129]:
+                  - generic [ref=e130]: Rest Time (seconds)
+                  - spinbutton [ref=e131]: "60"
+                - generic [ref=e132]:
+                  - generic [ref=e133]: Notes
+                  - textbox "Optional notes..." [ref=e134]
+          - generic [ref=e135]:
+            - button "Cancel" [ref=e136] [cursor=pointer]
+            - button "Create Plan" [ref=e137] [cursor=pointer]
+```

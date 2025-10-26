@@ -1,0 +1,45 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - heading "Fitness Tracker" [level=1] [ref=e6]
+      - button "Toggle theme" [ref=e7] [cursor=pointer]:
+        - img [ref=e8]
+  - main [ref=e10]:
+    - generic [ref=e11]:
+      - generic [ref=e13]:
+        - heading "LOGIN" [level=1] [ref=e15]
+        - generic [ref=e17]:
+          - generic [ref=e18]:
+            - generic [ref=e19]: Username
+            - generic [ref=e20]:
+              - textbox "Username" [ref=e21]:
+                - /placeholder: Enter your email
+              - generic [ref=e22]: "***"
+          - generic [ref=e23]:
+            - generic [ref=e24]: Password
+            - generic [ref=e25]:
+              - textbox "Password" [ref=e26]:
+                - /placeholder: Enter your password
+              - generic [ref=e27]:
+                - button [ref=e28] [cursor=pointer]:
+                  - img [ref=e29]
+                - generic [ref=e31]: "***"
+          - button "LOG IN" [ref=e32] [cursor=pointer]
+          - paragraph [ref=e34]: Forgot your password? Press here
+          - generic [ref=e39]: Or Continue With
+          - button "Google" [ref=e41] [cursor=pointer]:
+            - img [ref=e42]
+            - generic [ref=e47]: Google
+          - paragraph [ref=e49]:
+            - text: Don't have an account?
+            - link "Sign up" [ref=e50] [cursor=pointer]:
+              - /url: /signup
+      - generic [ref=e52]:
+        - img "Fitness training session with personal trainer and client doing push-ups" [ref=e53]
+        - generic [ref=e56]:
+          - heading "Fitness Training" [level=3] [ref=e57]
+          - paragraph [ref=e58]: Transform your body, transform your life
+```
