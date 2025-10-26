@@ -7,7 +7,7 @@ import { voiceNotes } from '../lib/voiceNotes';
 
 type CreateWorkoutPlan = Omit<WorkoutPlan, 'id' | 'createdAt' | 'updatedAt'>;
 
-export function PlansPage() {
+export default function PlansPage() {
   const [plans, setPlans] = useState<WorkoutPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);

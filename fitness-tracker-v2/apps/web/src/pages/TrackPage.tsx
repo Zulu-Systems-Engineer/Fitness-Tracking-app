@@ -17,7 +17,7 @@ interface LogSet {
   notes?: string;
 }
 
-export function TrackPage() {
+export default function TrackPage() {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [plans, setPlans] = useState<WorkoutPlan[]>([]);
   const [loading, setLoading] = useState(true);

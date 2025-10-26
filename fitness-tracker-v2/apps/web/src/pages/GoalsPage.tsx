@@ -31,7 +31,7 @@ interface UpdateGoalProgress {
   notes?: string;
 }
 
-export function GoalsPage() {
+export default function GoalsPage() {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);

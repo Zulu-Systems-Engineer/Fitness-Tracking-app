@@ -21,7 +21,7 @@ import {
   ResponsiveContainer
 } from 'recharts';
 
-export function AnalyticsPage() {
+export default function AnalyticsPage() {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [records, setRecords] = useState<PersonalRecord[]>([]);

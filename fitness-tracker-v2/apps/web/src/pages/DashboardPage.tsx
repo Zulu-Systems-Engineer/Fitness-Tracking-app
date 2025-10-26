@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { usage, colors } from '../lib/theme';
 import { workoutService, workoutPlanService, goalService, recordService } from '../lib/firebaseServices';
 
-export function DashboardPage() {
+export default function DashboardPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);

@@ -6,7 +6,7 @@ import { PersonalTab } from '../components/profile/PersonalTab';
 import { SecurityTab } from '../components/profile/SecurityTab';
 import { UserProfile } from '../types/UserProfile';
 
-export function ProfilePage() {
+export default function ProfilePage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<UserProfile | null>(null);

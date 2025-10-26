@@ -6,7 +6,7 @@ import { DebugInfo } from '../components/DebugInfo';
 import { useSecureFormValidation, validationRules, validatePasswordMatch, validateTermsAcceptance } from '../hooks/useSecureFormValidation';
 import { useRateLimit } from '../components/security/SecurityProvider';
 
-export function SignupPage() {
+export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
