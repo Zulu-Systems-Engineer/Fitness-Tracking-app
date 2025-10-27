@@ -4,6 +4,7 @@ import { usage, colors } from '../lib/theme';
 import { workoutPlanService, WorkoutPlan, Exercise } from '../lib/firebaseServices';
 import { useAuth } from '../contexts/AuthContext';
 import { voiceNotes } from '../lib/voiceNotes';
+import { useToast } from '../components/ui/Toast';
 
 type CreateWorkoutPlan = Omit<WorkoutPlan, 'id' | 'createdAt' | 'updatedAt'>;
 
@@ -19,6 +20,7 @@ export default function PlansPage() {
   });
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { showToast } = useToast();
 
   const workoutPlansTheme = usage.workoutPlans;
 
@@ -119,9 +121,10 @@ export default function PlansPage() {
 
         // Update state
         setPlans(plans.filter(plan => plan.id !== planId));
+        showToast('Workout plan deleted successfully!', 'success');
       } catch (error) {
         console.error('Error deleting workout plan:', error);
-        alert('Failed to delete workout plan. Please try again.');
+        showToast('Failed to delete workout plan. Please try again.', 'error');
       }
     }
   };
@@ -187,11 +190,11 @@ export default function PlansPage() {
       // Voice announcement
       voiceNotes.announceWorkoutStart(`Workout plan created successfully! ${planData.name} is now available.`);
 
-      // Show success message
-      alert('Workout plan created successfully!');
+      // Show success toast message
+      showToast('Workout plan created successfully!', 'success');
     } catch (error) {
       console.error('Error creating workout plan:', error);
-      alert('Failed to create workout plan. Please try again.');
+      showToast('Failed to create workout plan. Please try again.', 'error');
     }
   };
 
@@ -238,9 +241,12 @@ export default function PlansPage() {
       // Update state
       setPlans(plans.map(plan => plan.id === editingPlan.id ? updatedPlan : plan));
       setEditingPlan(null);
+      
+      // Show success toast
+      showToast('Workout plan updated successfully!', 'success');
     } catch (error) {
       console.error('Error updating workout plan:', error);
-      alert('Failed to update workout plan. Please try again.');
+      showToast('Failed to update workout plan. Please try again.', 'error');
     }
   };
 

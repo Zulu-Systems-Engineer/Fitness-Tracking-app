@@ -5,6 +5,7 @@ import { workoutService, workoutPlanService, Workout, WorkoutPlan, WorkoutExerci
 import { useAuth } from '../contexts/AuthContext';
 import { AutoWorkoutTracker } from '../components/workout/AutoWorkoutTracker';
 import { voiceNotes } from '../lib/voiceNotes';
+import { useToast } from '../components/ui/Toast';
 
 // Types are now imported from firebaseServices
 
@@ -29,6 +30,7 @@ export default function TrackPage() {
   const [workoutProgress, setWorkoutProgress] = useState<any>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { showToast } = useToast();
 
   const trackingTheme = usage.tracking;
 
@@ -182,9 +184,10 @@ export default function TrackPage() {
       setSelectedPlan(plan);
       setIsAutoTracking(true);
       setShowStartWorkout(false);
+      showToast('Workout started successfully!', 'success');
     } catch (error) {
       console.error('Error starting workout:', error);
-      alert('Failed to start workout. Please try again.');
+      showToast('Failed to start workout. Please try again.', 'error');
     }
   };
 
@@ -274,9 +277,10 @@ export default function TrackPage() {
 
       // Voice announcement
       voiceNotes.speak(`Set ${setData.setNumber} logged successfully!`, 'medium');
+      showToast('Set logged successfully!', 'success');
     } catch (error) {
       console.error('Error logging set:', error);
-      alert('Failed to log set. Please try again.');
+      showToast('Failed to log set. Please try again.', 'error');
     }
   };
 
@@ -319,9 +323,10 @@ export default function TrackPage() {
 
       // Voice announcement
       voiceNotes.announceWorkoutComplete(activeWorkout.name, completedWorkout.duration);
+      showToast('Workout completed successfully!', 'success');
     } catch (error) {
       console.error('Error completing workout:', error);
-      alert('Failed to complete workout. Please try again.');
+      showToast('Failed to complete workout. Please try again.', 'error');
     }
   };
 
@@ -347,9 +352,10 @@ export default function TrackPage() {
         if (activeWorkout?.id === workoutId) {
           setActiveWorkout(null);
         }
+        showToast('Workout deleted successfully!', 'success');
       } catch (error) {
         console.error('Error deleting workout:', error);
-        alert('Failed to delete workout. Please try again.');
+        showToast('Failed to delete workout. Please try again.', 'error');
       }
     }
   };
