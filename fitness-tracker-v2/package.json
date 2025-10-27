@@ -4,10 +4,26 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "db:seed": "prisma db seed",
+    "db:migrate": "prisma migrate dev",
+    "db:push": "prisma db push",
+    "db:generate": "prisma generate"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@10.18.3"
+  "packageManager": "pnpm@10.18.3",
+  "devDependencies": {
+    "@axe-core/react": "^4.11.0",
+    "jest-axe": "^10.0.0",
+    "prisma": "6.18.0",
+    "tsx": "^4.20.6"
+  },
+  "dependencies": {
+    "@prisma/client": "6.18.0"
+  }
 }

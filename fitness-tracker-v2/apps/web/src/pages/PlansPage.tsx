@@ -138,50 +138,25 @@ export default function PlansPage() {
 
   const handleCreatePlan = async (planData: CreateWorkoutPlan | Partial<WorkoutPlan>) => {
     try {
+      console.log('Creating workout plan:', planData);
       let newPlan: WorkoutPlan;
 
-      if (user) {
-        try {
-          // Try Firebase first
-          newPlan = await workoutPlanService.create({
-            ...planData,
-            createdBy: user.id,
-          } as CreateWorkoutPlan);
-          
-          // Update local storage for offline access
-          const existingPlans = JSON.parse(localStorage.getItem('workoutPlans') || '[]');
-          const updatedPlans = [newPlan, ...existingPlans];
-          localStorage.setItem('workoutPlans', JSON.stringify(updatedPlans));
-        } catch (firebaseError) {
-          console.log('Firebase not available, using local storage:', firebaseError);
-          
-          // Fallback to local storage
-          newPlan = {
-            ...planData,
-            id: crypto.randomUUID(),
-            createdBy: user.id,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          } as WorkoutPlan;
+      // Skip Firebase for now and use localStorage directly since Firebase isn't configured
+      newPlan = {
+        ...planData,
+        id: crypto.randomUUID(),
+        createdBy: user?.id || 'anonymous',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as WorkoutPlan;
 
-          const existingPlans = JSON.parse(localStorage.getItem('workoutPlans') || '[]');
-          const updatedPlans = [newPlan, ...existingPlans];
-          localStorage.setItem('workoutPlans', JSON.stringify(updatedPlans));
-        }
-      } else {
-        // No user, use local storage only
-        newPlan = {
-          ...planData,
-          id: crypto.randomUUID(),
-          createdBy: 'anonymous',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        } as WorkoutPlan;
+      console.log('Saving to localStorage:', newPlan);
+      
+      const existingPlans = JSON.parse(localStorage.getItem('workoutPlans') || '[]');
+      const updatedPlans = [newPlan, ...existingPlans];
+      localStorage.setItem('workoutPlans', JSON.stringify(updatedPlans));
 
-        const existingPlans = JSON.parse(localStorage.getItem('workoutPlans') || '[]');
-        const updatedPlans = [newPlan, ...existingPlans];
-        localStorage.setItem('workoutPlans', JSON.stringify(updatedPlans));
-      }
+      console.log('Plan saved to localStorage successfully');
 
       // Update state
       setPlans([newPlan, ...plans]);
@@ -191,7 +166,9 @@ export default function PlansPage() {
       voiceNotes.announceWorkoutStart(`Workout plan created successfully! ${planData.name} is now available.`);
 
       // Show success toast message
+      console.log('Calling showToast...');
       showToast('Workout plan created successfully!', 'success');
+      console.log('showToast called');
     } catch (error) {
       console.error('Error creating workout plan:', error);
       showToast('Failed to create workout plan. Please try again.', 'error');

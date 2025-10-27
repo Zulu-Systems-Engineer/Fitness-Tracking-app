@@ -26,140 +26,66 @@ model User {
   @@map("users")
 }
 
-model WorkoutPlan {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  duration    Int      // in minutes
-  difficulty  String   // beginner, intermediate, advanced
-  category    String?  // strength, cardio, etc.
-  isPublic    Boolean  @default(false)
-  createdBy   String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  creator User      @relation(fields: [createdBy], references: [id], onDelete: Cascade)
-  exercises WorkoutPlanExercise[]
-  workouts  Workout[]
-
-  @@map("workout_plans")
-}
-
-model WorkoutPlanExercise {
-  id           String   @id @default(cuid())
-  planId       String
-  name         String
-  description  String?
-  targetMuscles String[]
-  equipment    String?
-  instructions String[]
-  restTime     Int?     // in seconds
-  notes        String?
-
-  // Relations
-  plan WorkoutPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
-
-  @@map("workout_plan_exercises")
-}
-
 model Workout {
   id          String   @id @default(cuid())
-  name        String
-  description String?
-  planId      String?
   userId      String
-  status      String   @default("in_progress") // in_progress, completed, cancelled
-  startedAt   DateTime @default(now())
-  completedAt DateTime?
-  notes       String?
+  name        String
+  exercises   Json
+  duration    Int?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  // Relations
-  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  plan     WorkoutPlan?   @relation(fields: [planId], references: [id])
-  exercises WorkoutExercise[]
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("workouts")
-}
-
-model WorkoutExercise {
-  id           String   @id @default(cuid())
-  workoutId    String
-  name         String
-  description  String?
-  targetMuscles String[]
-  equipment    String?
-  instructions String[]
-  restTime     Int?     // in seconds
-  notes        String?
-
-  // Relations
-  workout Workout @relation(fields: [workoutId], references: [id], onDelete: Cascade)
-  sets    WorkoutSet[]
-
-  @@map("workout_exercises")
-}
-
-model WorkoutSet {
-  id         String   @id @default(cuid())
-  workoutId  String
-  exerciseId String
-  reps       Int?
-  weight     Float?   // in kg
-  duration   Int?     // in seconds for time-based exercises
-  distance   Float?   // in meters for distance-based exercises
-  restTime   Int?     // in seconds
-  notes      String?
-  createdAt  DateTime @default(now())
-
-  // Relations
-  workout  Workout        @relation(fields: [workoutId], references: [id], onDelete: Cascade)
-  exercise WorkoutExercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
-
-  @@map("workout_sets")
+  // Add performance indexes
+  @@index([userId, createdAt(sort: Desc)])  // Most common query pattern
+  @@index([userId])                          // User lookups
+  @@index([createdAt])                       // Time-based queries
 }
 
 model Goal {
-  id           String   @id @default(cuid())
-  userId       String
-  title        String
-  description  String?
-  type         String   // weight, reps, time, distance, other
-  targetValue  Float
-  currentValue Float    @default(0)
-  unit         String?  // kg, lbs, reps, minutes, etc.
-  priority     String   @default("medium") // low, medium, high
-  status       String   @default("in_progress") // in_progress, completed, cancelled
-  targetDate   DateTime?
-  completedAt  DateTime?
-  notes        String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  target      Float
+  current     Float    @default(0)
+  deadline    DateTime?
+  status      String   @default("active")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("goals")
+  @@index([userId, status])
+  @@index([userId, deadline])
+}
+
+model WorkoutPlan {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  schedule    Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model PersonalRecord {
   id          String   @id @default(cuid())
   userId      String
-  exerciseName String
-  type        String   // max_weight, max_reps, max_volume, best_time
+  exercise    String
   value       Float
-  unit        String?  // kg, lbs, reps, minutes, etc.
-  workoutId   String?
+  unit        String
+  recordType  String
   achievedAt  DateTime @default(now())
-  notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
 
-  // Relations
-  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  workout Workout? @relation(fields: [workoutId], references: [id])
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId, exercise])
+  @@index([userId, achievedAt(sort: Desc)])
   @@map("personal_records")
 }
