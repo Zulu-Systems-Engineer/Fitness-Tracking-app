@@ -76,7 +76,17 @@ export class VoiceNotes {
 
   public announceRestTime(seconds: number): void {
     if (seconds > 0) {
-      this.speak(`Rest for ${seconds} seconds.`, 'normal');
+      if (seconds >= 60) {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        if (remainingSeconds === 0) {
+          this.speak(`Rest for ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}.`, 'normal');
+        } else {
+          this.speak(`Rest for ${minutes} ${minutes === 1 ? 'minute' : 'minutes'} and ${remainingSeconds} seconds.`, 'normal');
+        }
+      } else {
+        this.speak(`Rest for ${seconds} seconds.`, 'normal');
+      }
     }
   }
 

@@ -244,7 +244,7 @@ export default function TrackPage() {
             };
             return {
               ...exercise,
-              sets: [...exercise.sets, newSet],
+              sets: (exercise.sets && Array.isArray(exercise.sets)) ? [...exercise.sets, newSet] : [newSet],
             };
           }
           return exercise;
@@ -511,16 +511,16 @@ export default function TrackPage() {
                 </button>
               </div>
             ) : (
-              workouts.map((workout) => (
+              workouts.filter(workout => workout).map((workout) => (
               <div key={workout.id} className="glassmorphism rounded-lg p-4" style={{ backgroundColor: workout.status === 'completed' ? trackingTheme.completedBg : undefined }}>
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="text-lg font-semibold" style={{ color: 'var(--glassmorphism-text)' }}>{workout.name}</h3>
+                    <h3 className="text-lg font-semibold" style={{ color: 'var(--glassmorphism-text)' }}>{workout.name || 'Untitled Workout'}</h3>
                     {workout.planName && (
                       <p style={{ color: 'var(--glassmorphism-text-secondary)' }}>From: {workout.planName}</p>
                     )}
                     <div className="flex gap-4 mt-2 text-sm" style={{ color: 'var(--glassmorphism-text-muted)' }}>
-                      <span>Started: {workout.startedAt.toLocaleDateString()}</span>
+                      <span>Started: {workout.startedAt ? workout.startedAt.toLocaleDateString() : 'Unknown'}</span>
                       {workout.completedAt && (
                         <span>Completed: {workout.completedAt.toLocaleDateString()}</span>
                       )}
@@ -532,7 +532,7 @@ export default function TrackPage() {
                         workout.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
                         'bg-red-100 text-red-800'
                       }`}>
-                        {workout.status.charAt(0).toUpperCase() + workout.status.slice(1)}
+                        {(workout.status || 'active').charAt(0).toUpperCase() + (workout.status || 'active').slice(1)}
                       </span>
                     </div>
                   </div>
@@ -557,14 +557,14 @@ export default function TrackPage() {
                   </div>
                 </div>
                 
-                {workout.exercises.length > 0 && (
+                {workout.exercises && workout.exercises.length > 0 && (
                   <div className="mt-4">
                     <h4 className="text-md font-medium mb-2" style={{ color: 'var(--glassmorphism-text)' }}>Exercises:</h4>
                     <div className="space-y-2">
                       {workout.exercises.map((exercise) => (
                         <div key={exercise.id} className="text-sm" style={{ color: 'var(--glassmorphism-text-secondary)' }}>
                           <span className="font-medium">{exercise.exerciseName}</span>
-                          {exercise.sets.length > 0 && (
+                          {exercise.sets && Array.isArray(exercise.sets) && exercise.sets.length > 0 && (
                             <span className="ml-2">
                               ({exercise.sets.length} sets completed)
                             </span>
@@ -607,7 +607,7 @@ function ExerciseTracker({ exercise, onLogSet }: ExerciseTrackerProps) {
     notes: '',
   });
 
-  const nextSetNumber = exercise.sets.length + 1;
+  const nextSetNumber = (exercise.sets && Array.isArray(exercise.sets) ? exercise.sets.length : 0) + 1;
 
   const handleLogSet = () => {
     if (currentSet.reps > 0) {
@@ -628,7 +628,7 @@ function ExerciseTracker({ exercise, onLogSet }: ExerciseTrackerProps) {
       <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--glassmorphism-text)' }}>{exercise.exerciseName}</h3>
       
       {/* Completed Sets */}
-      {exercise.sets.length > 0 && (
+      {exercise.sets && Array.isArray(exercise.sets) && exercise.sets.length > 0 && (
         <div className="mb-4">
           <h4 className="text-md font-medium mb-2" style={{ color: 'var(--glassmorphism-text-secondary)' }}>Completed Sets:</h4>
           <div className="space-y-2">

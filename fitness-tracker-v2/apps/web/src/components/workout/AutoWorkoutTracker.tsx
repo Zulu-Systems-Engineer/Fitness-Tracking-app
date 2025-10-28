@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { voiceNotes } from '../../lib/voiceNotes';
 import { WorkoutTimer } from './WorkoutTimer';
 
@@ -8,6 +8,7 @@ interface Exercise {
   sets: number;
   reps: number;
   weight: number;
+  restTime?: number;
 }
 
 interface WorkoutPlan {
@@ -32,25 +33,46 @@ export function AutoWorkoutTracker({ plan, onWorkoutComplete, onWorkoutProgress 
   const [workoutStartTime, setWorkoutStartTime] = useState<Date | null>(null);
   const [completedSets, setCompletedSets] = useState<{[key: string]: number}>({});
   const [workoutProgress, setWorkoutProgress] = useState<any[]>([]);
+  const [isRestBreak, setIsRestBreak] = useState(false);
+  const [restBreakEndTime, setRestBreakEndTime] = useState<Date | null>(null);
+  const [elapsedExerciseTime, setElapsedExerciseTime] = useState(0); // Track exercise time in seconds
+  const [restBreakCountdown, setRestBreakCountdown] = useState(60); // Rest break countdown in seconds
 
   const currentExercise = plan.exercises[currentExerciseIndex];
   const totalSets = plan.exercises.reduce((sum, ex) => sum + ex.sets, 0);
   const completedSetsCount = Object.values(completedSets).reduce((sum, count) => sum + count, 0);
   const progressPercentage = (completedSetsCount / totalSets) * 100;
 
-  // Auto-advance to next set after a delay
-  useEffect(() => {
-    if (isActive && currentExercise) {
-      const timer = setTimeout(() => {
-        // Auto-complete current set
-        handleSetComplete();
-      }, 30000); // 30 seconds per set (adjust as needed)
+  const handleWorkoutComplete = useCallback(() => {
+    const endTime = new Date();
+    const duration = workoutStartTime ? Math.round((endTime.getTime() - workoutStartTime.getTime()) / 60000) : 0;
 
-      return () => clearTimeout(timer);
-    }
-  }, [isActive, currentExercise, currentSet]);
+    const workoutData = {
+      planId: plan.id,
+      planName: plan.name,
+      exercises: plan.exercises.map(ex => ({
+        ...ex,
+        completedSets: completedSets[ex.id] || 0
+      })),
+      totalSets: totalSets,
+      completedSets: completedSetsCount,
+      duration: duration,
+      startedAt: workoutStartTime,
+      completedAt: endTime,
+      progress: workoutProgress,
+      status: 'completed'
+    };
 
-  const handleSetComplete = () => {
+    // COMPLETION PHASE: Announce workout completion with celebration
+    voiceNotes.speak(`Congratulations! You've completed ${plan.name}! You did it in ${duration} minutes. Amazing work!`, 'high');
+    setTimeout(() => {
+      voiceNotes.announceWorkoutComplete(plan.name, duration);
+    }, 1000);
+    onWorkoutComplete(workoutData);
+    setIsActive(false);
+  }, [plan, workoutStartTime, completedSets, totalSets, completedSetsCount, workoutProgress, onWorkoutComplete]);
+
+  const handleSetComplete = useCallback(() => {
     if (!currentExercise) return;
 
     const exerciseId = currentExercise.id;
@@ -101,40 +123,77 @@ export function AutoWorkoutTracker({ plan, onWorkoutComplete, onWorkoutProgress 
     } else {
       // Next set of same exercise
       setCurrentSet(prev => prev + 1);
-      voiceNotes.announceRestTime(30); // 30 second rest
+      const restTime = currentExercise.restTime || 60; // Use exercise restTime or default to 60 seconds
+      voiceNotes.announceRestTime(restTime);
     }
-  };
+  }, [currentExercise, currentSet, completedSets, workoutProgress, currentExerciseIndex, plan.exercises, onWorkoutProgress, handleWorkoutComplete]);
 
-  const handleWorkoutComplete = () => {
-    const endTime = new Date();
-    const duration = workoutStartTime ? Math.round((endTime.getTime() - workoutStartTime.getTime()) / 60000) : 0;
+  // Track exercise time and trigger periodic rest breaks (every 5 minutes = 300 seconds)
+  useEffect(() => {
+    if (isActive && !isRestBreak && workoutStartTime) {
+      const interval = setInterval(() => {
+        setElapsedExerciseTime(prev => {
+          const newTime = prev + 1;
+          
+          // Every 5 minutes (300 seconds), trigger a 1-minute rest break
+          if (newTime % 300 === 0 && newTime > 0) {
+            setIsRestBreak(true);
+            const restEndTime = new Date(Date.now() + 60000); // 1 minute from now
+            setRestBreakEndTime(restEndTime);
+            setRestBreakCountdown(60);
+            // REST PHASE: Loud and clear rest break announcement
+            voiceNotes.speak('REST BREAK! Take a 1 minute rest. You\'ve been working hard for 5 minutes. Time to recover!', 'high');
+          }
+          
+          return newTime;
+        });
+      }, 1000);
 
-    const workoutData = {
-      planId: plan.id,
-      planName: plan.name,
-      exercises: plan.exercises.map(ex => ({
-        ...ex,
-        completedSets: completedSets[ex.id] || 0
-      })),
-      totalSets: totalSets,
-      completedSets: completedSetsCount,
-      duration: duration,
-      startedAt: workoutStartTime,
-      completedAt: endTime,
-      progress: workoutProgress,
-      status: 'completed'
-    };
+      return () => clearInterval(interval);
+    }
+  }, [isActive, isRestBreak, workoutStartTime]);
 
-    voiceNotes.announceWorkoutComplete(plan.name, duration);
-    onWorkoutComplete(workoutData);
-    setIsActive(false);
-  };
+  // Handle rest break completion and countdown
+  useEffect(() => {
+    if (isRestBreak && restBreakEndTime) {
+      // Countdown timer for rest break
+      const countdownInterval = setInterval(() => {
+        const remaining = Math.ceil((restBreakEndTime.getTime() - Date.now()) / 1000);
+        setRestBreakCountdown(remaining);
+        
+        if (remaining <= 0) {
+          setIsRestBreak(false);
+          setRestBreakEndTime(null);
+          setRestBreakCountdown(60);
+          // REST PHASE END: Announce return to exercise
+          voiceNotes.speak('Rest break complete! Time to get back to it. Let\'s continue your workout!', 'high');
+        }
+      }, 1000);
+
+      return () => clearInterval(countdownInterval);
+    }
+  }, [isRestBreak, restBreakEndTime]);
+
+  // Auto-advance to next set after rest time
+  useEffect(() => {
+    if (isActive && currentExercise && !isRestBreak) {
+      const restTimeInMs = (currentExercise.restTime || 60) * 1000; // Use exercise restTime or default to 60 seconds
+      const timer = setTimeout(() => {
+        handleSetComplete();
+      }, restTimeInMs);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isActive, currentExercise, handleSetComplete, isRestBreak]);
 
   const handleStart = () => {
     setIsActive(true);
     setWorkoutStartTime(new Date());
-    voiceNotes.announceWorkoutStart(plan.name);
-    voiceNotes.announceExerciseStart(currentExercise.name, currentExercise.sets);
+    // START PHASE: Announce workout start with plan details
+    voiceNotes.speak(`Starting your workout: ${plan.name}! Let's begin with ${currentExercise.name}. Get ready!`, 'high');
+    setTimeout(() => {
+      voiceNotes.announceExerciseStart(currentExercise.name, currentExercise.sets);
+    }, 3000); // Small delay for better flow
   };
 
   const handleHalfway = () => {
@@ -161,47 +220,78 @@ export function AutoWorkoutTracker({ plan, onWorkoutComplete, onWorkoutProgress 
         onTimeUpdate={handleTimeUpdate}
       />
 
-      {/* Current Exercise */}
-      {isActive && currentExercise && (
+      {/* Current Exercise or Rest Break */}
+      {isActive && (
         <div className="glassmorphism p-6 rounded-2xl">
-          <h3 className="text-xl font-bold mb-4" style={{ color: 'var(--glassmorphism-text)' }}>
-            Current Exercise
-          </h3>
-          
-          <div className="text-center mb-6">
-            <h4 className="text-2xl font-semibold mb-2" style={{ color: 'var(--glassmorphism-text)' }}>
-              {currentExercise.name}
-            </h4>
-            <div className="text-lg" style={{ color: 'var(--glassmorphism-text-secondary)' }}>
-              Set {currentSet} of {currentExercise.sets}
-            </div>
-            <div className="text-sm" style={{ color: 'var(--glassmorphism-text-muted)' }}>
-              {currentExercise.reps} reps × {currentExercise.weight} lbs
-            </div>
-          </div>
+          {isRestBreak ? (
+            <>
+              <h3 className="text-xl font-bold mb-4 text-center" style={{ color: 'var(--glassmorphism-text)' }}>
+                🧘 Rest Break
+              </h3>
+              <div className="text-center mb-6">
+                <div className="text-4xl mb-4">⏸️</div>
+                <h4 className="text-2xl font-semibold mb-2" style={{ color: 'var(--glassmorphism-text)' }}>
+                  Take a 1 minute break
+                </h4>
+                <p className="text-sm" style={{ color: 'var(--glassmorphism-text-muted)' }}>
+                  You've been exercising for {Math.floor(elapsedExerciseTime / 60)} minutes. Rest up!
+                </p>
+                <div className="mt-4">
+                  <div className="text-6xl font-mono font-bold" style={{ color: 'var(--primary)' }}>
+                    {restBreakCountdown}
+                  </div>
+                  <div className="text-sm mt-2" style={{ color: 'var(--glassmorphism-text-muted)' }}>
+                    seconds remaining
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : currentExercise && (
+            <>
+              <h3 className="text-xl font-bold mb-4" style={{ color: 'var(--glassmorphism-text)' }}>
+                Current Exercise
+              </h3>
+              
+              <div className="text-center mb-6">
+                <h4 className="text-2xl font-semibold mb-2" style={{ color: 'var(--glassmorphism-text)' }}>
+                  {currentExercise.name}
+                </h4>
+                <div className="text-lg" style={{ color: 'var(--glassmorphism-text-secondary)' }}>
+                  Set {currentSet} of {currentExercise.sets}
+                </div>
+                <div className="text-sm" style={{ color: 'var(--glassmorphism-text-muted)' }}>
+                  {currentExercise.reps} reps × {currentExercise.weight} lbs
+                </div>
+              </div>
+            </>
+          )}
 
-          {/* Progress Bar */}
-          <div className="mb-6">
-            <div className="w-full bg-gray-700 rounded-full h-3 mb-2">
-              <div 
-                className="bg-gradient-to-r from-primary-500 to-secondary-500 h-3 rounded-full transition-all duration-500"
-                style={{ width: `${(currentSet / currentExercise.sets) * 100}%` }}
-              ></div>
-            </div>
-            <div className="text-sm text-center" style={{ color: 'var(--glassmorphism-text-muted)' }}>
-              {Math.round((currentSet / currentExercise.sets) * 100)}% Complete
-            </div>
-          </div>
+          {!isRestBreak && currentExercise && (
+            <>
+              {/* Progress Bar */}
+              <div className="mb-6">
+                <div className="w-full bg-gray-700 rounded-full h-3 mb-2">
+                  <div 
+                    className="bg-gradient-to-r from-primary-500 to-secondary-500 h-3 rounded-full transition-all duration-500"
+                    style={{ width: `${(currentSet / currentExercise.sets) * 100}%` }}
+                  ></div>
+                </div>
+                <div className="text-sm text-center" style={{ color: 'var(--glassmorphism-text-muted)' }}>
+                  {Math.round((currentSet / currentExercise.sets) * 100)}% Complete
+                </div>
+              </div>
 
-          {/* Auto-complete button (for manual override) */}
-          <div className="text-center">
-            <button
-              onClick={handleSetComplete}
-              className="bg-primary-600 text-white px-8 py-3 rounded-xl hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-300 font-semibold"
-            >
-              Complete Set
-            </button>
-          </div>
+              {/* Auto-complete button (for manual override) */}
+              <div className="text-center">
+                <button
+                  onClick={handleSetComplete}
+                  className="bg-primary-600 text-white px-8 py-3 rounded-xl hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-300 font-semibold"
+                >
+                  Complete Set
+                </button>
+              </div>
+            </>
+          )}
         </div>
       )}
 

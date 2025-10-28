@@ -83,8 +83,8 @@ export default function AnalyticsPage() {
       .map(workout => ({
         date: workout.startedAt.toLocaleDateString(),
         duration: workout.duration || 0,
-        exercises: workout.exercises.length,
-        totalSets: workout.exercises.reduce((sum, ex) => sum + ex.sets.length, 0)
+        exercises: workout.exercises ? workout.exercises.length : 0,
+        totalSets: workout.exercises ? workout.exercises.reduce((sum, ex) => sum + (ex.sets ? ex.sets.length : 0), 0) : 0
       }));
 
     return workoutData;
@@ -149,18 +149,22 @@ export default function AnalyticsPage() {
     const exerciseData: Record<string, { totalWeight: number, totalReps: number, sessions: number }> = {};
 
     filteredWorkouts.forEach(workout => {
-      workout.exercises.forEach(exercise => {
-        if (!exerciseData[exercise.exerciseName]) {
-          exerciseData[exercise.exerciseName] = { totalWeight: 0, totalReps: 0, sessions: 0 };
-        }
+      if (workout.exercises) {
+        workout.exercises.forEach(exercise => {
+          if (!exerciseData[exercise.exerciseName]) {
+            exerciseData[exercise.exerciseName] = { totalWeight: 0, totalReps: 0, sessions: 0 };
+          }
 
-        exercise.sets.forEach(set => {
-          exerciseData[exercise.exerciseName].totalWeight += set.weight || 0;
-          exerciseData[exercise.exerciseName].totalReps += set.reps;
+          if (exercise.sets && Array.isArray(exercise.sets)) {
+            exercise.sets.forEach(set => {
+              exerciseData[exercise.exerciseName].totalWeight += set.weight || 0;
+              exerciseData[exercise.exerciseName].totalReps += set.reps;
+            });
+          }
+
+          exerciseData[exercise.exerciseName].sessions += 1;
         });
-
-        exerciseData[exercise.exerciseName].sessions += 1;
-      });
+      }
     });
 
     return Object.entries(exerciseData)
