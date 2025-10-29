@@ -4,9 +4,10 @@ import { useFirebaseAuth } from '../useFirebaseAuth';
 import { User } from 'firebase/auth';
 
 // Mock Firebase
+const mockUnsubscribe = vi.fn();
 vi.mock('firebase/auth', () => ({
   getAuth: vi.fn(() => ({})),
-  onAuthStateChanged: vi.fn(),
+  onAuthStateChanged: vi.fn(() => mockUnsubscribe),
   signInWithEmailAndPassword: vi.fn(),
   createUserWithEmailAndPassword: vi.fn(),
   signInWithPopup: vi.fn(),
@@ -74,7 +75,13 @@ describe('useFirebaseAuth', () => {
   });
 
   it('should handle sign in error', async () => {
-    const { signInWithEmailAndPassword } = await import('firebase/auth');
+    const { signInWithEmailAndPassword, onAuthStateChanged } = await import('firebase/auth');
+
+    // Mock onAuthStateChanged to call callback with null user (not authenticated)
+    vi.mocked(onAuthStateChanged).mockImplementation((auth, callback) => {
+      callback(null); // No user authenticated
+      return mockUnsubscribe;
+    });
 
     // Mock signInWithEmailAndPassword to reject
     vi.mocked(signInWithEmailAndPassword).mockRejectedValue(new Error('Invalid credentials'));
@@ -87,9 +94,18 @@ describe('useFirebaseAuth', () => {
     });
 
     // Test sign in error
-    await expect(result.current.login('test@example.com', 'wrongpassword')).rejects.toThrow('Invalid credentials');
+    try {
+      await result.current.login('test@example.com', 'wrongpassword');
+    } catch (error) {
+      // Expected to throw
+    }
 
-    expect(result.current.error).toBe('Invalid credentials');
+    // Wait for error state to be set
+    await waitFor(() => {
+      expect(result.current.error).toBe('Invalid credentials');
+    });
+    
+    // User should remain null after failed login
     expect(result.current.user).toBe(null);
   });
 

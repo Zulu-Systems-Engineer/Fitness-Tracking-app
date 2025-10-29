@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { voiceNotes } from '../../lib/voiceNotes';
 import { WorkoutTimer } from './WorkoutTimer';
 
@@ -18,6 +18,8 @@ interface WorkoutPlan {
   exercises: Exercise[];
   duration: number;
   difficulty: string;
+  restBreakDuration?: number; // Configurable rest break duration in minutes (default 1)
+  restBreakFrequency?: number; // Configurable rest break frequency in minutes (default 5)
 }
 
 interface AutoWorkoutTrackerProps {
@@ -37,11 +39,25 @@ export function AutoWorkoutTracker({ plan, onWorkoutComplete, onWorkoutProgress 
   const [restBreakEndTime, setRestBreakEndTime] = useState<Date | null>(null);
   const [elapsedExerciseTime, setElapsedExerciseTime] = useState(0); // Track exercise time in seconds
   const [restBreakCountdown, setRestBreakCountdown] = useState(60); // Rest break countdown in seconds
+  
+  // Memoize calculated values to prevent unnecessary re-renders
+  const restBreakDurationSeconds = useMemo(() => (plan.restBreakDuration || 1) * 60, [plan.restBreakDuration]); // Convert minutes to seconds, default 1 minute
+  const restBreakFrequencySeconds = useMemo(() => (plan.restBreakFrequency || 5) * 60, [plan.restBreakFrequency]); // Convert minutes to seconds, default 5 minutes
 
   const currentExercise = plan.exercises[currentExerciseIndex];
   const totalSets = plan.exercises.reduce((sum, ex) => sum + ex.sets, 0);
   const completedSetsCount = Object.values(completedSets).reduce((sum, count) => sum + count, 0);
   const progressPercentage = (completedSetsCount / totalSets) * 100;
+
+  // Format time to MM:SS
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Calculate rest break progress
+  const restBreakProgress = ((restBreakDurationSeconds - restBreakCountdown) / restBreakDurationSeconds) * 100;
 
   const handleWorkoutComplete = useCallback(() => {
     const endTime = new Date();
@@ -135,14 +151,15 @@ export function AutoWorkoutTracker({ plan, onWorkoutComplete, onWorkoutProgress 
         setElapsedExerciseTime(prev => {
           const newTime = prev + 1;
           
-          // Every 5 minutes (300 seconds), trigger a 1-minute rest break
-          if (newTime % 300 === 0 && newTime > 0) {
+          // Trigger rest break based on configured frequency
+          if (newTime % restBreakFrequencySeconds === 0 && newTime > 0) {
             setIsRestBreak(true);
-            const restEndTime = new Date(Date.now() + 60000); // 1 minute from now
+            const restEndTime = new Date(Date.now() + restBreakDurationSeconds * 1000); // Use configured duration
             setRestBreakEndTime(restEndTime);
-            setRestBreakCountdown(60);
+            setRestBreakCountdown(restBreakDurationSeconds);
             // REST PHASE: Loud and clear rest break announcement
-            voiceNotes.speak('REST BREAK! Take a 1 minute rest. You\'ve been working hard for 5 minutes. Time to recover!', 'high');
+            const restDurationMins = plan.restBreakDuration || 1;
+            voiceNotes.speak(`REST BREAK! Take a ${restDurationMins} minute rest. You've been working hard for ${plan.restBreakFrequency || 5} minutes. Time to recover!`, 'high');
           }
           
           return newTime;
@@ -151,7 +168,7 @@ export function AutoWorkoutTracker({ plan, onWorkoutComplete, onWorkoutProgress 
 
       return () => clearInterval(interval);
     }
-  }, [isActive, isRestBreak, workoutStartTime]);
+  }, [isActive, isRestBreak, workoutStartTime, restBreakDurationSeconds, restBreakFrequencySeconds]);
 
   // Handle rest break completion and countdown
   useEffect(() => {
@@ -164,7 +181,7 @@ export function AutoWorkoutTracker({ plan, onWorkoutComplete, onWorkoutProgress 
         if (remaining <= 0) {
           setIsRestBreak(false);
           setRestBreakEndTime(null);
-          setRestBreakCountdown(60);
+          setRestBreakCountdown(restBreakDurationSeconds);
           // REST PHASE END: Announce return to exercise
           voiceNotes.speak('Rest break complete! Time to get back to it. Let\'s continue your workout!', 'high');
         }
@@ -172,7 +189,7 @@ export function AutoWorkoutTracker({ plan, onWorkoutComplete, onWorkoutProgress 
 
       return () => clearInterval(countdownInterval);
     }
-  }, [isRestBreak, restBreakEndTime]);
+  }, [isRestBreak, restBreakEndTime, restBreakDurationSeconds]);
 
   // Auto-advance to next set after rest time
   useEffect(() => {
@@ -231,17 +248,30 @@ export function AutoWorkoutTracker({ plan, onWorkoutComplete, onWorkoutProgress 
               <div className="text-center mb-6">
                 <div className="text-4xl mb-4">⏸️</div>
                 <h4 className="text-2xl font-semibold mb-2" style={{ color: 'var(--glassmorphism-text)' }}>
-                  Take a 1 minute break
+                  Take a {plan.restBreakDuration || 1} minute break
                 </h4>
                 <p className="text-sm" style={{ color: 'var(--glassmorphism-text-muted)' }}>
                   You've been exercising for {Math.floor(elapsedExerciseTime / 60)} minutes. Rest up!
                 </p>
                 <div className="mt-4">
                   <div className="text-6xl font-mono font-bold" style={{ color: 'var(--primary)' }}>
-                    {restBreakCountdown}
+                    {formatTime(Math.max(0, restBreakCountdown))}
                   </div>
                   <div className="text-sm mt-2" style={{ color: 'var(--glassmorphism-text-muted)' }}>
-                    seconds remaining
+                    remaining
+                  </div>
+                </div>
+
+                {/* Rest Break Progress Bar */}
+                <div className="mt-6">
+                  <div className="w-full bg-gray-700 rounded-full h-3 mb-2">
+                    <div 
+                      className="bg-gradient-to-r from-yellow-500 to-orange-500 h-3 rounded-full transition-all duration-500"
+                      style={{ width: `${Math.min(100, restBreakProgress)}%` }}
+                    ></div>
+                  </div>
+                  <div className="text-sm" style={{ color: 'var(--glassmorphism-text-muted)' }}>
+                    {Math.round(Math.min(100, restBreakProgress))}% Complete
                   </div>
                 </div>
               </div>

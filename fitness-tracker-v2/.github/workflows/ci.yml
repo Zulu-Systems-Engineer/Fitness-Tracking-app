@@ -1,297 +1,230 @@
-name: CI/CD Pipeline
+name: Security & Testing CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, feature/**]
   pull_request:
     branches: [main, develop]
+  schedule:
+    # Run security scans daily at 2 AM UTC
+    - cron: '0 2 * * *'
 
-# Job-level concurrency to prevent overlapping runs
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '8'
 
 jobs:
   lint-and-typecheck:
-    name: 🔍 Lint & Type Check
+    name: Lint and Type Check
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    
     steps:
-      - uses: actions/checkout@v4
-      
-      - uses: pnpm/action-setup@v2
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
         with:
           version: 8
-          run_install: false
-      
-      - uses: actions/setup-node@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
-      
-      # Cache for faster builds
-      - name: Cache node modules
-        uses: actions/cache@v4
-        with:
-          path: |
-            apps/web/node_modules
-            functions/node_modules
-            e2e/node_modules
-            node_modules
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-
-      
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      
-      - name: 📏 Lint
+
+      - name: Run linter
         run: pnpm --filter web lint
-      
-      - name: 🔍 Type check
+
+      - name: Type check
         run: pnpm --filter web type-check
-      
-      - name: 🎨 Format check
+
+      - name: Format check
         run: pnpm --filter web format:check
 
-  test-unit:
-    name: 🧪 Unit Tests
+  security:
+    name: Security Testing
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    
     steps:
-      - uses: actions/checkout@v4
-      
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 8
-          run_install: false
-      
-      - uses: actions/setup-node@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
-      
-      - name: Cache node modules
-        uses: actions/cache@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
         with:
-          path: |
-            apps/web/node_modules
-            node_modules
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-
-      
+          version: 8
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      
-      - name: Run tests with coverage
-        run: pnpm --filter web test:coverage
+
+      - name: Run npm audit
+        run: pnpm audit --audit-level=moderate
+        continue-on-error: true
+
+      - name: Run Snyk security scan
+        uses: snyk/actions/node@master
+        continue-on-error: true
         env:
-          CI: true
-      
-      - name: 📊 Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+
+      - name: Check for secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          repo_path: ./
+
+  test-unit:
+    name: Unit Tests with Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run unit tests with coverage
+        run: pnpm --filter web test:coverage
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
         with:
           files: ./apps/web/coverage/lcov.info
           flags: unittests
           name: codecov-umbrella
-          fail_ci_if_error: false
-      
-      - name: 📈 Generate coverage comment
-        uses: py-cov-action/python-coverage-comment-action@v3
-        if: github.event_name == 'pull_request'
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MINIMUM_GREEN: 80
-          MINIMUM_ORANGE: 60
 
   e2e-tests:
-    name: 🎭 E2E Tests
+    name: E2E Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    
     steps:
-      - uses: actions/checkout@v4
-      
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 8
-          run_install: false
-      
-      - uses: actions/setup-node@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
-      
-      - name: Cache Playwright
-        uses: actions/cache@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
         with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('e2e/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-playwright-
-      
-      - name: Cache node modules
-        uses: actions/cache@v4
-        with:
-          path: e2e/node_modules
-          key: ${{ runner.os }}-pnpm-e2e-${{ hashFiles('e2e/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-e2e-
-      
+          version: 8
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-        working-directory: e2e
-      
+
       - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps
-        working-directory: e2e
-      
+        run: cd e2e && pnpm exec playwright install --with-deps
+
       - name: Run E2E tests
-        run: pnpm test
-        working-directory: e2e
-        env:
-          CI: true
-      
-      - name: 📦 Upload test results
+        run: cd e2e && pnpm test
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v3
         if: always()
-        uses: actions/upload-artifact@v4
         with:
           name: playwright-report
           path: e2e/playwright-report/
-          retention-days: 7
-      
-      - name: 📊 Publish Playwright Report
-        if: always()
-        uses: mxschmitt/action-playwright-report@v1
-        with:
-          report-path: e2e/playwright-report
+          retention-days: 30
 
   build:
-    name: 🏗️ Build
+    name: Build Production
     runs-on: ubuntu-latest
     needs: [lint-and-typecheck, test-unit]
-    timeout-minutes: 15
-    
     steps:
-      - uses: actions/checkout@v4
-      
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 8
-          run_install: false
-      
-      - uses: actions/setup-node@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
-      
-      - name: Cache node modules
-        uses: actions/cache@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
         with:
-          path: |
-            apps/web/node_modules
-            node_modules
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-
-      
+          version: 8
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      
-      - name: 🏗️ Build production bundle
+
+      - name: Build project
         run: pnpm --filter web build
-        env:
-          CI: true
-      
-      - name: 📦 Upload build artifacts
-        uses: actions/upload-artifact@v4
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
         with:
-          name: build-artifacts
-          path: apps/web/dist/
+          name: dist
+          path: apps/web/dist
           retention-days: 7
-      
-      - name: 📊 Generate build report
-        run: |
-          echo "## 🏗️ Build Report" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Build completed successfully" >> $GITHUB_STEP_SUMMARY
-          du -sh apps/web/dist/ >> $GITHUB_STEP_SUMMARY
 
   deploy-preview:
-    name: 🚀 Deploy Preview
+    name: Deploy Preview
     runs-on: ubuntu-latest
-    needs: [build, e2e-tests]
+    needs: [build]
     if: github.event_name == 'pull_request'
-    timeout-minutes: 10
-    
     steps:
-      - uses: actions/checkout@v4
-      
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Download build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v3
         with:
-          name: build-artifacts
-          path: apps/web/dist/
-      
-      - name: 🚀 Deploy to Firebase Preview
-        uses: FirebaseExtended/action-hosting-deploy@v0
+          name: dist
+
+      - name: Setup Firebase
+        uses: google-github-actions/setup-gcloud@v2
         with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
-          projectId: fitness-tracker-app-v2
-          channelId: pr-${{ github.event.number }}
-      
-      - name: 📝 Comment PR
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '🚀 Preview deployment ready!'
-            })
+          project_id: ${{ secrets.FIREBASE_PROJECT_ID }}
+
+      - name: Deploy to Firebase
+        run: firebase hosting:channel:deploy preview-${{ github.event.number }} --expires 7d
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
 
   deploy-production:
-    name: 🌐 Deploy Production
+    name: Deploy to Production
     runs-on: ubuntu-latest
-    needs: [build, e2e-tests]
+    needs: [build, e2e-tests, security]
     if: github.ref == 'refs/heads/main'
-    timeout-minutes: 10
-    environment:
-      name: production
-      url: https://fitness-tracker-app-v2.web.app
-    
     steps:
-      - uses: actions/checkout@v4
-      
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Download build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v3
         with:
-          name: build-artifacts
-          path: apps/web/dist/
-      
-      - name: 🌐 Deploy to Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0
+          name: dist
+
+      - name: Setup Firebase
+        uses: google-github-actions/setup-gcloud@v2
         with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
-          projectId: fitness-tracker-app-v2
-          channelId: live
-      
-      - name: 🔔 Notify on success
-        if: success()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.repos.createCommitStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: context.sha,
-              state: 'success',
-              target_url: 'https://fitness-tracker-app-v2.web.app',
-              description: 'Production deployment successful',
-              context: 'deployment/production'
-            })
+          project_id: ${{ secrets.FIREBASE_PROJECT_ID }}
+
+      - name: Deploy to Firebase Hosting
+        run: firebase deploy --only hosting
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}

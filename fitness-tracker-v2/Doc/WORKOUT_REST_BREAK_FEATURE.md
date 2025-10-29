@@ -11,7 +11,10 @@ Added automatic periodic rest breaks during workouts to prevent user fatigue. Th
 - Time resets to 0 when starting a new workout
 
 ### 2. Periodic Rest Breaks
-- Every **5 minutes (300 seconds)** of exercise time, a **1-minute rest break** is automatically triggered
+- Every **5 minutes (configurable)** of exercise time, a **1-minute rest break (configurable)** is automatically triggered
+- Duration and frequency are now configurable via the workout plan:
+  - `restBreakDuration`: Duration in minutes (default: 1 minute)
+  - `restBreakFrequency`: Frequency in minutes (default: 5 minutes)
 - During rest breaks:
   - Exercise time counter is paused
   - No new sets are auto-advanced
@@ -91,13 +94,32 @@ const [restBreakCountdown, setRestBreakCountdown] = useState(60);
 
 ## Configuration
 
-Currently hardcoded values (can be made configurable):
-- Rest break frequency: **Every 5 minutes** (300 seconds)
-- Rest break duration: **1 minute** (60 seconds)
+Rest break timing is now configurable per workout plan:
+- **Rest break duration**: Set via `restBreakDuration` property (in minutes, default: 1)
+- **Rest break frequency**: Set via `restBreakFrequency` property (in minutes, default: 5)
 
-To change these values, modify:
-- Line 135: `if (newTime % 300 === 0 && newTime > 0)` - Change 300 to desired frequency in seconds
-- Line 138: `new Date(Date.now() + 60000)` - Change 60000 to desired duration in milliseconds
+### Example Workout Plan Configuration:
+
+```typescript
+const workoutPlan = {
+  name: "High Intensity Workout",
+  duration: 30,
+  restBreakDuration: 2, // 2-minute rest breaks
+  restBreakFrequency: 10, // Every 10 minutes of exercise
+  exercises: [...]
+};
+```
+
+### Custom Durations:
+- **Short rest (30 sec)**: Set `restBreakDuration: 0.5`
+- **Standard rest (1 min)**: Set `restBreakDuration: 1` (default)
+- **Extended rest (2 min)**: Set `restBreakDuration: 2`
+- **Long rest (5 min)**: Set `restBreakDuration: 5`
+
+### Custom Frequencies:
+- **Frequent breaks (every 3 min)**: Set `restBreakFrequency: 3`
+- **Standard breaks (every 5 min)**: Set `restBreakFrequency: 5` (default)
+- **Infrequent breaks (every 10 min)**: Set `restBreakFrequency: 10`
 
 ## Testing
 

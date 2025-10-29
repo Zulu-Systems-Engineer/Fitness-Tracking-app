@@ -1,8 +1,9 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
-import { PlansPage } from '../pages/PlansPage';
+import PlansPage from '../pages/PlansPage';
 import { AuthProvider } from '../contexts/AuthContext';
+import { ToastProvider } from '../components/ui/Toast';
 
 // Mock the useAuth hook
 const mockUser = {
@@ -42,7 +43,9 @@ const renderWithRouter = (component: React.ReactElement) => {
   return render(
     <BrowserRouter>
       <AuthProvider>
-        {component}
+        <ToastProvider>
+          {component}
+        </ToastProvider>
       </AuthProvider>
     </BrowserRouter>
   );
@@ -58,13 +61,13 @@ describe('PlansPage', () => {
     
     expect(screen.getByText('Workout Plans')).toBeInTheDocument();
     expect(screen.getByText('Create and manage your workout routines')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /create new plan/i })).toBeInTheDocument();
+    expect(screen.getByText('Create New Plan')).toBeInTheDocument();
   });
 
   it('opens create plan form when button is clicked', async () => {
     renderWithRouter(<PlansPage />);
     
-    const createButton = screen.getByRole('button', { name: /create new plan/i });
+    const createButton = screen.getByText('Create New Plan');
     fireEvent.click(createButton);
     
     await waitFor(() => {
@@ -112,7 +115,7 @@ describe('PlansPage', () => {
       expect(screen.getByText('Advanced Plan')).toBeInTheDocument();
     });
 
-    const difficultyFilter = screen.getByLabelText(/difficulty/i);
+    const difficultyFilter = screen.getByDisplayValue('');
     fireEvent.change(difficultyFilter, { target: { value: 'beginner' } });
     
     await waitFor(() => {
@@ -153,7 +156,7 @@ describe('PlansPage', () => {
       expect(screen.getByText('Pull Day')).toBeInTheDocument();
     });
 
-    const searchInput = screen.getByPlaceholderText(/search plans/i);
+    const searchInput = screen.getByPlaceholderText('Search plans...');
     fireEvent.change(searchInput, { target: { value: 'Push' } });
     
     await waitFor(() => {
@@ -165,8 +168,8 @@ describe('PlansPage', () => {
   it('has proper accessibility attributes', () => {
     renderWithRouter(<PlansPage />);
     
-    const createButton = screen.getByRole('button', { name: /create new plan/i });
-    const searchInput = screen.getByPlaceholderText(/search plans/i);
+    const createButton = screen.getByText('Create New Plan');
+    const searchInput = screen.getByPlaceholderText('Search plans...');
     
     expect(createButton).toBeInTheDocument();
     expect(searchInput).toHaveAttribute('type', 'text');

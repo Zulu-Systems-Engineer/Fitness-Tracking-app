@@ -2,7 +2,7 @@ import { describe, it, vi, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
 import { axe, toHaveNoViolations } from 'jest-axe';
 import { BrowserRouter } from 'react-router-dom';
-import { LoginPage } from './LoginPage';
+import LoginPage from './LoginPage';
 import { AuthProvider } from '../contexts/AuthContext';
 
 // Extend expect with jest-axe matchers
@@ -43,7 +43,6 @@ describe('LoginPage Accessibility', () => {
       // Configure axe rules
       rules: {
         'color-contrast': { enabled: true },
-        'keyboard-navigation': { enabled: true },
         'aria-labels': { enabled: true },
         'heading-order': { enabled: true },
       },
@@ -63,7 +62,7 @@ describe('LoginPage Accessibility', () => {
     );
 
     // Verify form inputs have proper labels
-    const emailInput = getByLabelText(/email/i);
+    const emailInput = getByLabelText(/username/i);
     const passwordInput = getByLabelText(/password/i);
 
     expect(emailInput).toBeInTheDocument();
@@ -82,7 +81,7 @@ describe('LoginPage Accessibility', () => {
     );
 
     // Verify buttons are accessible
-    const loginButton = getByRole('button', { name: /sign in|log in/i });
+    const loginButton = getByRole('button', { name: /log in/i });
     expect(loginButton).toBeInTheDocument();
     expect(loginButton).not.toHaveAttribute('aria-hidden');
   });

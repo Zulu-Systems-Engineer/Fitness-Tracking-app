@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { AnalyticsPage } from './AnalyticsPage'
+import AnalyticsPage from './AnalyticsPage'
 
 // Mock the auth context
 vi.mock('../contexts/AuthContext', () => ({
@@ -67,7 +67,7 @@ vi.mock('recharts', () => ({
 describe('AnalyticsPage', () => {
   it('renders analytics heading', () => {
     render(<AnalyticsPage />)
-    expect(screen.getByText(/analytics dashboard/i)).toBeInTheDocument()
+    expect(screen.getByText('Analytics Dashboard')).toBeInTheDocument()
   })
 
   it('shows loading state initially', () => {

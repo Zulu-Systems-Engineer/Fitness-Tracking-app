@@ -19,12 +19,22 @@ export const sanitizeInput = (input: string): string => {
   sanitized = sanitized.replace(/\s+on\w+\s*=\s*["'][^"']*["']/gi, '');
   sanitized = sanitized.replace(/\s+on\w+\s*=\s*[^\s>]*/gi, '');
 
-  // Remove javascript:, data:, and vbscript: protocols
+  // Check for malicious protocols - if entire input is a protocol call, remove it completely
+  if (/^(javascript|data|vbscript):/i.test(input)) {
+    return '';
+  }
+
+  // Remove javascript:, data:, and vbscript: protocols from anywhere in the string
   sanitized = sanitized.replace(/javascript:/gi, '');
   sanitized = sanitized.replace(/data:/gi, '');
   sanitized = sanitized.replace(/vbscript:/gi, '');
 
-  return sanitized.trim();
+  const result = sanitized.trim();
+  
+  // If result would be empty after protocol removal, return empty string
+  if (!result) return '';
+  
+  return result;
 };
 
 export const sanitizeHtml = (html: string): string => {
