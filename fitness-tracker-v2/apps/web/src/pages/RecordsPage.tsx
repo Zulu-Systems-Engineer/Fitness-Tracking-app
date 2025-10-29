@@ -28,7 +28,7 @@ interface RecordStats {
   recentRecords: PersonalRecord[];
 }
 
-export function RecordsPage() {
+export default function RecordsPage() {
   const [records, setRecords] = useState<PersonalRecord[]>([]);
   const [stats, setStats] = useState<RecordStats | null>(null);
   const [loading, setLoading] = useState(true);

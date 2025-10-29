@@ -1,19 +1,18 @@
 import { 
-  collection, 
-  doc, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  getDocs, 
-  getDoc, 
+  ref, 
+  push, 
+  set, 
+  get, 
+  update as updateDB, 
+  remove,
   query, 
-  where, 
-  orderBy, 
-  limit,
-  Timestamp,
-  DocumentData,
-  QueryDocumentSnapshot
-} from 'firebase/firestore';
+  orderByChild,
+  equalTo,
+  limitToFirst,
+  startAt,
+  endAt,
+  DataSnapshot
+} from 'firebase/database';
 import { db } from './firebase';
 
 // Types
@@ -105,28 +104,50 @@ export interface PersonalRecord {
   updatedAt: Date;
 }
 
-// Helper function to convert Firestore data
-const convertFirestoreData = (doc: QueryDocumentSnapshot<DocumentData>) => {
-  const data = doc.data();
-  const id = doc.id;
+// Helper function to convert Realtime Database snapshot to array
+const snapshotToArray = (snapshot: DataSnapshot) => {
+  if (!snapshot.exists()) return [];
+  const data = snapshot.val();
+  return Object.keys(data).map(key => ({
+    id: key,
+    ...data[key]
+  }));
+};
+
+// Helper to convert timestamp strings back to Date objects
+const convertDates = (obj: any): any => {
+  if (!obj || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(convertDates);
   
-  // Convert Firestore Timestamps to Dates
-  const convertTimestamps = (obj: any): any => {
-    if (obj && typeof obj === 'object') {
-      if (obj.seconds && obj.nanoseconds) {
-        return new Date(obj.seconds * 1000);
-      }
-      if (Array.isArray(obj)) {
-        return obj.map(convertTimestamps);
-      }
-      return Object.fromEntries(
-        Object.entries(obj).map(([key, value]) => [key, convertTimestamps(value)])
-      );
+  const converted: any = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (key.includes('At') || key.includes('Date')) {
+      converted[key] = value ? new Date(value as string) : undefined;
+    } else if (typeof value === 'object') {
+      converted[key] = convertDates(value);
+    } else {
+      converted[key] = value;
     }
-    return obj;
-  };
+  }
+  return converted;
+};
+
+// Helper to convert Date objects to ISO strings for storage
+const datesToStrings = (obj: any): any => {
+  if (!obj || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(datesToStrings);
   
-  return { id, ...convertTimestamps(data) };
+  const converted: any = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value instanceof Date) {
+      converted[key] = value.toISOString();
+    } else if (typeof value === 'object') {
+      converted[key] = datesToStrings(value);
+    } else {
+      converted[key] = value;
+    }
+  }
+  return converted;
 };
 
 // Workout Plans
@@ -134,52 +155,54 @@ export const workoutPlanService = {
   async create(plan: Omit<WorkoutPlan, 'id' | 'createdAt' | 'updatedAt'>): Promise<WorkoutPlan> {
     const now = new Date();
     const planData = {
-      ...plan,
-      createdAt: Timestamp.fromDate(now),
-      updatedAt: Timestamp.fromDate(now)
+      ...datesToStrings(plan),
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString()
     };
     
-    const docRef = await addDoc(collection(db, 'workoutPlans'), planData);
-    return { ...plan, id: docRef.id, createdAt: now, updatedAt: now };
+    const planRef = ref(db, 'workoutPlans');
+    const newPlanRef = push(planRef);
+    await set(newPlanRef, planData);
+    
+    return { ...plan, id: newPlanRef.key!, createdAt: now, updatedAt: now };
   },
 
   async getAll(userId?: string): Promise<WorkoutPlan[]> {
-    let q = query(collection(db, 'workoutPlans'), orderBy('createdAt', 'desc'));
+    const planRef = ref(db, 'workoutPlans');
+    let queryRef = query(planRef, orderByChild('createdAt'));
     
     if (userId) {
-      q = query(
-        collection(db, 'workoutPlans'),
-        where('createdBy', '==', userId),
-        orderBy('createdAt', 'desc')
-      );
+      queryRef = query(planRef, orderByChild('createdBy'), equalTo(userId));
     }
     
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(convertFirestoreData) as WorkoutPlan[];
+    const snapshot = await get(queryRef);
+    const plans = snapshotToArray(snapshot);
+    return (plans as any[]).map(convertDates).reverse() as WorkoutPlan[];
   },
 
   async getById(id: string): Promise<WorkoutPlan | null> {
-    const docRef = doc(db, 'workoutPlans', id);
-    const docSnap = await getDoc(docRef);
+    const planRef = ref(db, `workoutPlans/${id}`);
+    const snapshot = await get(planRef);
     
-    if (docSnap.exists()) {
-      return convertFirestoreData(docSnap) as WorkoutPlan;
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      return { id: snapshot.key!, ...convertDates(data) } as WorkoutPlan;
     }
     return null;
   },
 
   async update(id: string, updates: Partial<WorkoutPlan>): Promise<void> {
-    const docRef = doc(db, 'workoutPlans', id);
+    const planRef = ref(db, `workoutPlans/${id}`);
     const updateData = {
-      ...updates,
-      updatedAt: Timestamp.fromDate(new Date())
+      ...datesToStrings(updates),
+      updatedAt: new Date().toISOString()
     };
-    await updateDoc(docRef, updateData);
+    await updateDB(planRef, updateData);
   },
 
   async delete(id: string): Promise<void> {
-    const docRef = doc(db, 'workoutPlans', id);
-    await deleteDoc(docRef);
+    const planRef = ref(db, `workoutPlans/${id}`);
+    await remove(planRef);
   }
 };
 
@@ -188,65 +211,69 @@ export const workoutService = {
   async create(workout: Omit<Workout, 'id' | 'createdAt' | 'updatedAt'>): Promise<Workout> {
     const now = new Date();
     const workoutData = {
-      ...workout,
-      startedAt: Timestamp.fromDate(workout.startedAt),
-      completedAt: workout.completedAt ? Timestamp.fromDate(workout.completedAt) : null,
-      createdAt: Timestamp.fromDate(now),
-      updatedAt: Timestamp.fromDate(now)
+      ...datesToStrings(workout),
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString()
     };
     
-    const docRef = await addDoc(collection(db, 'workouts'), workoutData);
-    return { ...workout, id: docRef.id, createdAt: now, updatedAt: now };
+    const workoutRef = ref(db, 'workouts');
+    const newWorkoutRef = push(workoutRef);
+    await set(newWorkoutRef, workoutData);
+    
+    return { ...workout, id: newWorkoutRef.key!, createdAt: now, updatedAt: now };
   },
 
   async getAll(userId: string): Promise<Workout[]> {
-    const q = query(
-      collection(db, 'workouts'),
-      where('userId', '==', userId),
-      orderBy('createdAt', 'desc')
+    const workoutRef = ref(db, 'workouts');
+    const queryRef = query(
+      workoutRef,
+      orderByChild('userId'),
+      equalTo(userId)
     );
     
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(convertFirestoreData) as Workout[];
+    const snapshot = await get(queryRef);
+    const workouts = snapshotToArray(snapshot);
+    return (workouts as any[]).map(convertDates).reverse() as Workout[];
   },
 
   async getActive(userId: string): Promise<Workout | null> {
-    const q = query(
-      collection(db, 'workouts'),
-      where('userId', '==', userId),
-      where('status', '==', 'active'),
-      limit(1)
+    const workoutRef = ref(db, 'workouts');
+    const queryRef = query(
+      workoutRef,
+      orderByChild('userId'),
+      equalTo(userId),
+      limitToFirst(50)
     );
     
-    const snapshot = await getDocs(q);
-    if (snapshot.empty) return null;
-    
-    return convertFirestoreData(snapshot.docs[0]) as Workout;
+    const snapshot = await get(queryRef);
+    const workouts = snapshotToArray(snapshot) as any[];
+    const active = workouts.find(w => w.status === 'active');
+    return active ? convertDates(active) as Workout : null;
   },
 
   async getById(id: string): Promise<Workout | null> {
-    const docRef = doc(db, 'workouts', id);
-    const docSnap = await getDoc(docRef);
+    const workoutRef = ref(db, `workouts/${id}`);
+    const snapshot = await get(workoutRef);
     
-    if (docSnap.exists()) {
-      return convertFirestoreData(docSnap) as Workout;
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      return { id: snapshot.key!, ...convertDates(data) } as Workout;
     }
     return null;
   },
 
   async update(id: string, updates: Partial<Workout>): Promise<void> {
-    const docRef = doc(db, 'workouts', id);
+    const workoutRef = ref(db, `workouts/${id}`);
     const updateData = {
-      ...updates,
-      completedAt: updates.completedAt ? Timestamp.fromDate(updates.completedAt) : undefined,
-      updatedAt: Timestamp.fromDate(new Date())
+      ...datesToStrings(updates),
+      updatedAt: new Date().toISOString()
     };
-    await updateDoc(docRef, updateData);
+    await updateDB(workoutRef, updateData);
   },
 
   async delete(id: string): Promise<void> {
-    const docRef = doc(db, 'workouts', id);
-    await deleteDoc(docRef);
+    const workoutRef = ref(db, `workouts/${id}`);
+    await remove(workoutRef);
   }
 };
 
@@ -255,52 +282,54 @@ export const goalService = {
   async create(goal: Omit<Goal, 'id' | 'createdAt' | 'updatedAt'>): Promise<Goal> {
     const now = new Date();
     const goalData = {
-      ...goal,
-      targetDate: Timestamp.fromDate(goal.targetDate),
-      completedAt: goal.completedAt ? Timestamp.fromDate(goal.completedAt) : null,
-      createdAt: Timestamp.fromDate(now),
-      updatedAt: Timestamp.fromDate(now)
+      ...datesToStrings(goal),
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString()
     };
     
-    const docRef = await addDoc(collection(db, 'goals'), goalData);
-    return { ...goal, id: docRef.id, createdAt: now, updatedAt: now };
+    const goalRef = ref(db, 'goals');
+    const newGoalRef = push(goalRef);
+    await set(newGoalRef, goalData);
+    
+    return { ...goal, id: newGoalRef.key!, createdAt: now, updatedAt: now };
   },
 
   async getAll(userId: string): Promise<Goal[]> {
-    const q = query(
-      collection(db, 'goals'),
-      where('userId', '==', userId),
-      orderBy('createdAt', 'desc')
+    const goalRef = ref(db, 'goals');
+    const queryRef = query(
+      goalRef,
+      orderByChild('userId'),
+      equalTo(userId)
     );
     
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(convertFirestoreData) as Goal[];
+    const snapshot = await get(queryRef);
+    const goals = snapshotToArray(snapshot);
+    return (goals as any[]).map(convertDates).reverse() as Goal[];
   },
 
   async getById(id: string): Promise<Goal | null> {
-    const docRef = doc(db, 'goals', id);
-    const docSnap = await getDoc(docRef);
+    const goalRef = ref(db, `goals/${id}`);
+    const snapshot = await get(goalRef);
     
-    if (docSnap.exists()) {
-      return convertFirestoreData(docSnap) as Goal;
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      return { id: snapshot.key!, ...convertDates(data) } as Goal;
     }
     return null;
   },
 
   async update(id: string, updates: Partial<Goal>): Promise<void> {
-    const docRef = doc(db, 'goals', id);
+    const goalRef = ref(db, `goals/${id}`);
     const updateData = {
-      ...updates,
-      targetDate: updates.targetDate ? Timestamp.fromDate(updates.targetDate) : undefined,
-      completedAt: updates.completedAt ? Timestamp.fromDate(updates.completedAt) : undefined,
-      updatedAt: Timestamp.fromDate(new Date())
+      ...datesToStrings(updates),
+      updatedAt: new Date().toISOString()
     };
-    await updateDoc(docRef, updateData);
+    await updateDB(goalRef, updateData);
   },
 
   async delete(id: string): Promise<void> {
-    const docRef = doc(db, 'goals', id);
-    await deleteDoc(docRef);
+    const goalRef = ref(db, `goals/${id}`);
+    await remove(goalRef);
   }
 };
 
@@ -309,61 +338,67 @@ export const recordService = {
   async create(record: Omit<PersonalRecord, 'id' | 'createdAt' | 'updatedAt'>): Promise<PersonalRecord> {
     const now = new Date();
     const recordData = {
-      ...record,
-      dateAchieved: Timestamp.fromDate(record.dateAchieved),
-      createdAt: Timestamp.fromDate(now),
-      updatedAt: Timestamp.fromDate(now)
+      ...datesToStrings(record),
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString()
     };
     
-    const docRef = await addDoc(collection(db, 'personalRecords'), recordData);
-    return { ...record, id: docRef.id, createdAt: now, updatedAt: now };
+    const recordRef = ref(db, 'personalRecords');
+    const newRecordRef = push(recordRef);
+    await set(newRecordRef, recordData);
+    
+    return { ...record, id: newRecordRef.key!, createdAt: now, updatedAt: now };
   },
 
   async getAll(userId: string): Promise<PersonalRecord[]> {
-    const q = query(
-      collection(db, 'personalRecords'),
-      where('userId', '==', userId),
-      orderBy('dateAchieved', 'desc')
+    const recordRef = ref(db, 'personalRecords');
+    const queryRef = query(
+      recordRef,
+      orderByChild('userId'),
+      equalTo(userId)
     );
     
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(convertFirestoreData) as PersonalRecord[];
+    const snapshot = await get(queryRef);
+    const records = snapshotToArray(snapshot);
+    return (records as any[]).map(convertDates).reverse() as PersonalRecord[];
   },
 
   async getByExercise(userId: string, exerciseName: string): Promise<PersonalRecord[]> {
-    const q = query(
-      collection(db, 'personalRecords'),
-      where('userId', '==', userId),
-      where('exerciseName', '==', exerciseName),
-      orderBy('dateAchieved', 'desc')
+    const recordRef = ref(db, 'personalRecords');
+    const queryRef = query(
+      recordRef,
+      orderByChild('userId'),
+      equalTo(userId)
     );
     
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(convertFirestoreData) as PersonalRecord[];
+    const snapshot = await get(queryRef);
+    const allRecords = snapshotToArray(snapshot) as any[];
+    const filtered = allRecords.filter(r => r.exerciseName === exerciseName);
+    return filtered.map(convertDates) as PersonalRecord[];
   },
 
   async getById(id: string): Promise<PersonalRecord | null> {
-    const docRef = doc(db, 'personalRecords', id);
-    const docSnap = await getDoc(docRef);
+    const recordRef = ref(db, `personalRecords/${id}`);
+    const snapshot = await get(recordRef);
     
-    if (docSnap.exists()) {
-      return convertFirestoreData(docSnap) as PersonalRecord;
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      return { id: snapshot.key!, ...convertDates(data) } as PersonalRecord;
     }
     return null;
   },
 
   async update(id: string, updates: Partial<PersonalRecord>): Promise<void> {
-    const docRef = doc(db, 'personalRecords', id);
+    const recordRef = ref(db, `personalRecords/${id}`);
     const updateData = {
-      ...updates,
-      dateAchieved: updates.dateAchieved ? Timestamp.fromDate(updates.dateAchieved) : undefined,
-      updatedAt: Timestamp.fromDate(new Date())
+      ...datesToStrings(updates),
+      updatedAt: new Date().toISOString()
     };
-    await updateDoc(docRef, updateData);
+    await updateDB(recordRef, updateData);
   },
 
   async delete(id: string): Promise<void> {
-    const docRef = doc(db, 'personalRecords', id);
-    await deleteDoc(docRef);
+    const recordRef = ref(db, `personalRecords/${id}`);
+    await remove(recordRef);
   }
 };

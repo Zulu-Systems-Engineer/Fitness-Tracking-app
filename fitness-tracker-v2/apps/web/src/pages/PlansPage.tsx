@@ -4,10 +4,11 @@ import { usage, colors } from '../lib/theme';
 import { workoutPlanService, WorkoutPlan, Exercise } from '../lib/firebaseServices';
 import { useAuth } from '../contexts/AuthContext';
 import { voiceNotes } from '../lib/voiceNotes';
+import { useToast } from '../components/ui/Toast';
 
 type CreateWorkoutPlan = Omit<WorkoutPlan, 'id' | 'createdAt' | 'updatedAt'>;
 
-export function PlansPage() {
+export default function PlansPage() {
   const [plans, setPlans] = useState<WorkoutPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -19,6 +20,7 @@ export function PlansPage() {
   });
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { showToast } = useToast();
 
   const workoutPlansTheme = usage.workoutPlans;
 
@@ -119,9 +121,10 @@ export function PlansPage() {
 
         // Update state
         setPlans(plans.filter(plan => plan.id !== planId));
+        showToast('Workout plan deleted successfully!', 'success');
       } catch (error) {
         console.error('Error deleting workout plan:', error);
-        alert('Failed to delete workout plan. Please try again.');
+        showToast('Failed to delete workout plan. Please try again.', 'error');
       }
     }
   };
@@ -135,50 +138,25 @@ export function PlansPage() {
 
   const handleCreatePlan = async (planData: CreateWorkoutPlan | Partial<WorkoutPlan>) => {
     try {
+      console.log('Creating workout plan:', planData);
       let newPlan: WorkoutPlan;
 
-      if (user) {
-        try {
-          // Try Firebase first
-          newPlan = await workoutPlanService.create({
-            ...planData,
-            createdBy: user.id,
-          } as CreateWorkoutPlan);
-          
-          // Update local storage for offline access
-          const existingPlans = JSON.parse(localStorage.getItem('workoutPlans') || '[]');
-          const updatedPlans = [newPlan, ...existingPlans];
-          localStorage.setItem('workoutPlans', JSON.stringify(updatedPlans));
-        } catch (firebaseError) {
-          console.log('Firebase not available, using local storage:', firebaseError);
-          
-          // Fallback to local storage
-          newPlan = {
-            ...planData,
-            id: crypto.randomUUID(),
-            createdBy: user.id,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          } as WorkoutPlan;
+      // Skip Firebase for now and use localStorage directly since Firebase isn't configured
+      newPlan = {
+        ...planData,
+        id: crypto.randomUUID(),
+        createdBy: user?.id || 'anonymous',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as WorkoutPlan;
 
-          const existingPlans = JSON.parse(localStorage.getItem('workoutPlans') || '[]');
-          const updatedPlans = [newPlan, ...existingPlans];
-          localStorage.setItem('workoutPlans', JSON.stringify(updatedPlans));
-        }
-      } else {
-        // No user, use local storage only
-        newPlan = {
-          ...planData,
-          id: crypto.randomUUID(),
-          createdBy: 'anonymous',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        } as WorkoutPlan;
+      console.log('Saving to localStorage:', newPlan);
+      
+      const existingPlans = JSON.parse(localStorage.getItem('workoutPlans') || '[]');
+      const updatedPlans = [newPlan, ...existingPlans];
+      localStorage.setItem('workoutPlans', JSON.stringify(updatedPlans));
 
-        const existingPlans = JSON.parse(localStorage.getItem('workoutPlans') || '[]');
-        const updatedPlans = [newPlan, ...existingPlans];
-        localStorage.setItem('workoutPlans', JSON.stringify(updatedPlans));
-      }
+      console.log('Plan saved to localStorage successfully');
 
       // Update state
       setPlans([newPlan, ...plans]);
@@ -187,11 +165,13 @@ export function PlansPage() {
       // Voice announcement
       voiceNotes.announceWorkoutStart(`Workout plan created successfully! ${planData.name} is now available.`);
 
-      // Show success message
-      alert('Workout plan created successfully!');
+      // Show success toast message
+      console.log('Calling showToast...');
+      showToast('Workout plan created successfully!', 'success');
+      console.log('showToast called');
     } catch (error) {
       console.error('Error creating workout plan:', error);
-      alert('Failed to create workout plan. Please try again.');
+      showToast('Failed to create workout plan. Please try again.', 'error');
     }
   };
 
@@ -238,9 +218,12 @@ export function PlansPage() {
       // Update state
       setPlans(plans.map(plan => plan.id === editingPlan.id ? updatedPlan : plan));
       setEditingPlan(null);
+      
+      // Show success toast
+      showToast('Workout plan updated successfully!', 'success');
     } catch (error) {
       console.error('Error updating workout plan:', error);
-      alert('Failed to update workout plan. Please try again.');
+      showToast('Failed to update workout plan. Please try again.', 'error');
     }
   };
 

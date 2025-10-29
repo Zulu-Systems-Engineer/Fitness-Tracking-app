@@ -11,7 +11,7 @@ import {
   checkRateLimit,
   logSecurityEvent,
   isSecureEnvironment
-} from '../lib/security';
+} from '../../lib/security';
 
 // Security Context
 interface SecurityContextType {

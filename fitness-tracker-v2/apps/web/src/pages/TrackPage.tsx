@@ -5,6 +5,7 @@ import { workoutService, workoutPlanService, Workout, WorkoutPlan, WorkoutExerci
 import { useAuth } from '../contexts/AuthContext';
 import { AutoWorkoutTracker } from '../components/workout/AutoWorkoutTracker';
 import { voiceNotes } from '../lib/voiceNotes';
+import { useToast } from '../components/ui/Toast';
 
 // Types are now imported from firebaseServices
 
@@ -17,7 +18,7 @@ interface LogSet {
   notes?: string;
 }
 
-export function TrackPage() {
+export default function TrackPage() {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [plans, setPlans] = useState<WorkoutPlan[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,6 +30,7 @@ export function TrackPage() {
   const [workoutProgress, setWorkoutProgress] = useState<any>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { showToast } = useToast();
 
   const trackingTheme = usage.tracking;
 
@@ -182,9 +184,10 @@ export function TrackPage() {
       setSelectedPlan(plan);
       setIsAutoTracking(true);
       setShowStartWorkout(false);
+      showToast('Workout started successfully!', 'success');
     } catch (error) {
       console.error('Error starting workout:', error);
-      alert('Failed to start workout. Please try again.');
+      showToast('Failed to start workout. Please try again.', 'error');
     }
   };
 
@@ -241,7 +244,7 @@ export function TrackPage() {
             };
             return {
               ...exercise,
-              sets: [...exercise.sets, newSet],
+              sets: (exercise.sets && Array.isArray(exercise.sets)) ? [...exercise.sets, newSet] : [newSet],
             };
           }
           return exercise;
@@ -274,9 +277,10 @@ export function TrackPage() {
 
       // Voice announcement
       voiceNotes.speak(`Set ${setData.setNumber} logged successfully!`, 'medium');
+      showToast('Set logged successfully!', 'success');
     } catch (error) {
       console.error('Error logging set:', error);
-      alert('Failed to log set. Please try again.');
+      showToast('Failed to log set. Please try again.', 'error');
     }
   };
 
@@ -319,9 +323,10 @@ export function TrackPage() {
 
       // Voice announcement
       voiceNotes.announceWorkoutComplete(activeWorkout.name, completedWorkout.duration);
+      showToast('Workout completed successfully!', 'success');
     } catch (error) {
       console.error('Error completing workout:', error);
-      alert('Failed to complete workout. Please try again.');
+      showToast('Failed to complete workout. Please try again.', 'error');
     }
   };
 
@@ -347,9 +352,10 @@ export function TrackPage() {
         if (activeWorkout?.id === workoutId) {
           setActiveWorkout(null);
         }
+        showToast('Workout deleted successfully!', 'success');
       } catch (error) {
         console.error('Error deleting workout:', error);
-        alert('Failed to delete workout. Please try again.');
+        showToast('Failed to delete workout. Please try again.', 'error');
       }
     }
   };
@@ -505,16 +511,16 @@ export function TrackPage() {
                 </button>
               </div>
             ) : (
-              workouts.map((workout) => (
+              workouts.filter(workout => workout).map((workout) => (
               <div key={workout.id} className="glassmorphism rounded-lg p-4" style={{ backgroundColor: workout.status === 'completed' ? trackingTheme.completedBg : undefined }}>
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="text-lg font-semibold" style={{ color: 'var(--glassmorphism-text)' }}>{workout.name}</h3>
+                    <h3 className="text-lg font-semibold" style={{ color: 'var(--glassmorphism-text)' }}>{workout.name || 'Untitled Workout'}</h3>
                     {workout.planName && (
                       <p style={{ color: 'var(--glassmorphism-text-secondary)' }}>From: {workout.planName}</p>
                     )}
                     <div className="flex gap-4 mt-2 text-sm" style={{ color: 'var(--glassmorphism-text-muted)' }}>
-                      <span>Started: {workout.startedAt.toLocaleDateString()}</span>
+                      <span>Started: {workout.startedAt ? workout.startedAt.toLocaleDateString() : 'Unknown'}</span>
                       {workout.completedAt && (
                         <span>Completed: {workout.completedAt.toLocaleDateString()}</span>
                       )}
@@ -526,7 +532,7 @@ export function TrackPage() {
                         workout.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
                         'bg-red-100 text-red-800'
                       }`}>
-                        {workout.status.charAt(0).toUpperCase() + workout.status.slice(1)}
+                        {(workout.status || 'active').charAt(0).toUpperCase() + (workout.status || 'active').slice(1)}
                       </span>
                     </div>
                   </div>
@@ -551,14 +557,14 @@ export function TrackPage() {
                   </div>
                 </div>
                 
-                {workout.exercises.length > 0 && (
+                {workout.exercises && workout.exercises.length > 0 && (
                   <div className="mt-4">
                     <h4 className="text-md font-medium mb-2" style={{ color: 'var(--glassmorphism-text)' }}>Exercises:</h4>
                     <div className="space-y-2">
                       {workout.exercises.map((exercise) => (
                         <div key={exercise.id} className="text-sm" style={{ color: 'var(--glassmorphism-text-secondary)' }}>
                           <span className="font-medium">{exercise.exerciseName}</span>
-                          {exercise.sets.length > 0 && (
+                          {exercise.sets && Array.isArray(exercise.sets) && exercise.sets.length > 0 && (
                             <span className="ml-2">
                               ({exercise.sets.length} sets completed)
                             </span>
@@ -601,7 +607,7 @@ function ExerciseTracker({ exercise, onLogSet }: ExerciseTrackerProps) {
     notes: '',
   });
 
-  const nextSetNumber = exercise.sets.length + 1;
+  const nextSetNumber = (exercise.sets && Array.isArray(exercise.sets) ? exercise.sets.length : 0) + 1;
 
   const handleLogSet = () => {
     if (currentSet.reps > 0) {
@@ -622,7 +628,7 @@ function ExerciseTracker({ exercise, onLogSet }: ExerciseTrackerProps) {
       <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--glassmorphism-text)' }}>{exercise.exerciseName}</h3>
       
       {/* Completed Sets */}
-      {exercise.sets.length > 0 && (
+      {exercise.sets && Array.isArray(exercise.sets) && exercise.sets.length > 0 && (
         <div className="mb-4">
           <h4 className="text-md font-medium mb-2" style={{ color: 'var(--glassmorphism-text-secondary)' }}>Completed Sets:</h4>
           <div className="space-y-2">

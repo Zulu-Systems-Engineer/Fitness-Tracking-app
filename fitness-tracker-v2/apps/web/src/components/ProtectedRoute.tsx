@@ -10,7 +10,10 @@ interface ProtectedRouteProps {
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, loading } = useAuth();
 
-  if (loading) {
+  // Development mode bypass - allows access without authentication
+  const DEV_MODE_BYPASS = import.meta.env.DEV;
+
+  if (loading && !DEV_MODE_BYPASS) {
     return (
       <div className="min-h-screen bg-bg-secondary flex items-center justify-center">
         <LoadingSpinner />
@@ -18,7 +21,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
 
-  if (!user) {
+  if (!user && !DEV_MODE_BYPASS) {
     return <Navigate to="/login" replace />;
   }
 

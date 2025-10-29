@@ -11,7 +11,7 @@ import {
   validateGoalTitle,
   sanitizeInput,
   logSecurityEvent
-} from '../../lib/security';
+} from '../lib/security';
 
 interface ValidationRule {
   required?: boolean;

@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
-import { LoginPage } from '../pages/LoginPage';
+import LoginPage from '../pages/LoginPage';
 import { AuthProvider } from '../contexts/AuthContext';
 
 // Mock the useAuth hook
@@ -40,7 +40,7 @@ describe('LoginPage', () => {
     renderWithRouter(<LoginPage />);
     
     expect(screen.getByText('LOGIN')).toBeInTheDocument();
-    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/username/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /log in/i })).toBeInTheDocument();
   });
@@ -52,7 +52,7 @@ describe('LoginPage', () => {
     fireEvent.click(submitButton);
     
     await waitFor(() => {
-      expect(screen.getByText(/email is required/i)).toBeInTheDocument();
+      expect(screen.getByText(/username is required/i)).toBeInTheDocument();
       expect(screen.getByText(/password is required/i)).toBeInTheDocument();
     });
   });
@@ -62,7 +62,7 @@ describe('LoginPage', () => {
     
     renderWithRouter(<LoginPage />);
     
-    const emailInput = screen.getByLabelText(/email/i);
+    const emailInput = screen.getByLabelText(/username/i);
     const passwordInput = screen.getByLabelText(/password/i);
     const submitButton = screen.getByRole('button', { name: /log in/i });
     
@@ -83,7 +83,7 @@ describe('LoginPage', () => {
     
     renderWithRouter(<LoginPage />);
     
-    const emailInput = screen.getByLabelText(/email/i);
+    const emailInput = screen.getByLabelText(/username/i);
     const passwordInput = screen.getByLabelText(/password/i);
     const submitButton = screen.getByRole('button', { name: /log in/i });
     
@@ -101,7 +101,7 @@ describe('LoginPage', () => {
     
     renderWithRouter(<LoginPage />);
     
-    const googleButton = screen.getByRole('button', { name: /sign in with google/i });
+    const googleButton = screen.getByRole('button', { name: /google/i });
     fireEvent.click(googleButton);
     
     await waitFor(() => {
@@ -112,7 +112,7 @@ describe('LoginPage', () => {
   it('has proper accessibility attributes', () => {
     renderWithRouter(<LoginPage />);
     
-    const emailInput = screen.getByLabelText(/email/i);
+    const emailInput = screen.getByLabelText(/username/i);
     const passwordInput = screen.getByLabelText(/password/i);
     
     expect(emailInput).toHaveAttribute('type', 'email');

@@ -4,6 +4,7 @@ import { usage } from '../lib/theme';
 import { voiceNotes } from '../lib/voiceNotes';
 import { goalService } from '../lib/firebaseServices';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../components/ui/Toast';
 
 // Mock types for demo purposes
 interface Goal {
@@ -31,7 +32,7 @@ interface UpdateGoalProgress {
   notes?: string;
 }
 
-export function GoalsPage() {
+export default function GoalsPage() {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -44,6 +45,7 @@ export function GoalsPage() {
   });
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { showToast } = useToast();
 
   const goalsTheme = usage.goals;
 
@@ -149,9 +151,10 @@ export function GoalsPage() {
 
         // Update state
         setGoals(goals.filter(goal => goal.id !== goalId));
+        showToast('Goal deleted successfully!', 'success');
       } catch (error) {
         console.error('Error deleting goal:', error);
-        alert('Failed to delete goal. Please try again.');
+        showToast('Failed to delete goal. Please try again.', 'error');
       }
     }
   };
@@ -210,11 +213,11 @@ export function GoalsPage() {
       // Voice announcement
       voiceNotes.speak(`Goal created successfully! ${goalData.title} is now active.`, 'high');
 
-      // Show success message
-      alert('Goal created successfully!');
+      // Show success toast message
+      showToast('Goal created successfully!', 'success');
     } catch (error) {
       console.error('Error creating goal:', error);
-      alert('Failed to create goal. Please try again.');
+      showToast('Failed to create goal. Please try again.', 'error');
     }
   };
 
@@ -261,9 +264,10 @@ export function GoalsPage() {
       // Update state
       setGoals(goals.map(goal => goal.id === editingGoal.id ? updatedGoal : goal));
       setEditingGoal(null);
+      showToast('Goal updated successfully!', 'success');
     } catch (error) {
       console.error('Error updating goal:', error);
-      alert('Failed to update goal. Please try again.');
+      showToast('Failed to update goal. Please try again.', 'error');
     }
   };
 

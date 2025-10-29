@@ -5,15 +5,16 @@ import { usage } from '../lib/theme';
 import { PersonalTab } from '../components/profile/PersonalTab';
 import { SecurityTab } from '../components/profile/SecurityTab';
 import { UserProfile } from '../types/UserProfile';
+import { useToast } from '../components/ui/Toast';
 
-export function ProfilePage() {
+export default function ProfilePage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'personal' | 'fitness' | 'preferences' | 'privacy' | 'security'>('personal');
+  const { showToast } = useToast();
 
   const profileTheme = usage.profile || {
     headerBg: 'var(--bg-tertiary)',
@@ -58,19 +59,21 @@ export function ProfilePage() {
     if (!profile) return;
     
     setSaving(true);
-    setSaveMessage('');
     try {
-      // TODO: Replace with actual Firebase call
-      // await profileService.update(profile.id, profile);
+      // Save to localStorage for now
+      const existingProfiles = JSON.parse(localStorage.getItem('userProfiles') || '[]');
+      const updatedProfiles = existingProfiles.filter((p: any) => p.id !== profile.id);
+      updatedProfiles.push({
+        ...profile,
+        updatedAt: new Date(),
+      });
+      localStorage.setItem('userProfiles', JSON.stringify(updatedProfiles));
       
       console.log('Profile saved:', profile);
-      setSaveMessage('Profile saved successfully! (Note: Firebase integration pending)');
-      // Clear message after 3 seconds
-      setTimeout(() => setSaveMessage(''), 3000);
+      showToast('Profile saved successfully!', 'success');
     } catch (error) {
       console.error('Error saving profile:', error);
-      setSaveMessage('Error saving profile. Please try again.');
-      setTimeout(() => setSaveMessage(''), 3000);
+      showToast('Error saving profile. Please try again.', 'error');
     } finally {
       setSaving(false);
     }
@@ -245,17 +248,6 @@ export function ProfilePage() {
             <SecurityTab profile={profile} onChange={handleInputChange} />
           )}
         </div>
-
-        {/* Save Message */}
-        {saveMessage && (
-          <div className={`mt-6 p-3 rounded-lg text-sm ${
-            saveMessage.includes('successfully') 
-              ? 'bg-green-500/20 border border-green-500/30 text-green-200' 
-              : 'bg-red-500/20 border border-red-500/30 text-red-200'
-          }`}>
-            {saveMessage}
-          </div>
-        )}
 
         {/* Save Button */}
         <div className="mt-8 flex justify-end gap-4">

@@ -66,7 +66,6 @@ export function SecurityTab({ profile, onChange }: SecurityTabProps) {
     try {
       // TODO: Implement actual password change API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('Password changed successfully');
       
       // Reset form
       setPasswordData({
@@ -76,8 +75,9 @@ export function SecurityTab({ profile, onChange }: SecurityTabProps) {
       });
       setPasswordErrors([]);
       
-      // Show success message (in real app, use toast notification)
-      alert('Password changed successfully!');
+      // Note: In a real app, this would use the Toast notification system
+      // For now, we'll just show a console message
+      console.log('Password changed successfully!');
     } catch (error) {
       console.error('Error changing password:', error);
       setPasswordErrors(['Failed to change password. Please try again.']);

@@ -2,9 +2,13 @@ import '@testing-library/jest-dom';
 import { expect, afterEach } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import * as matchers from '@testing-library/jest-dom/matchers';
+import { toHaveNoViolations } from 'jest-axe';
 
 // Extend Vitest's expect with jest-dom matchers
 expect.extend(matchers);
+
+// Extend Vitest's expect with jest-axe matchers
+expect.extend(toHaveNoViolations);
 
 // Cleanup after each test case
 afterEach(() => {
@@ -58,11 +62,22 @@ const sessionStorageMock = {
 };
 global.sessionStorage = sessionStorageMock;
 
-// Mock crypto.randomUUID
-global.crypto = {
-  ...global.crypto,
-  randomUUID: vi.fn(() => 'mock-uuid-123'),
-};
+// Mock crypto API for testing
+Object.defineProperty(global, 'crypto', {
+  value: {
+    ...global.crypto,
+    randomUUID: vi.fn(() => 'mock-uuid-123'),
+    getRandomValues: vi.fn((arr: Uint8Array) => {
+      // Fill array with pseudo-random values for testing
+      for (let i = 0; i < arr.length; i++) {
+        arr[i] = Math.floor(Math.random() * 256);
+      }
+      return arr;
+    }),
+  },
+  writable: true,
+  configurable: true,
+});
 
 // Mock Firebase
 vi.mock('firebase/app', () => ({
@@ -70,13 +85,13 @@ vi.mock('firebase/app', () => ({
 }));
 
 vi.mock('firebase/auth', () => ({
-  getAuth: vi.fn(),
+  getAuth: vi.fn(() => ({})),
   signInWithEmailAndPassword: vi.fn(),
   createUserWithEmailAndPassword: vi.fn(),
   signInWithPopup: vi.fn(),
   GoogleAuthProvider: vi.fn(),
   signOut: vi.fn(),
-  onAuthStateChanged: vi.fn(),
+  onAuthStateChanged: vi.fn(() => vi.fn()), // Return unsubscribe function
 }));
 
 vi.mock('firebase/firestore', () => ({

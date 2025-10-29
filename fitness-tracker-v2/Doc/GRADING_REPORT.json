@@ -1,0 +1,329 @@
+{
+  "metadata": {
+    "assignment": "Fullstack Web App - Assignment1",
+    "student_name": "",
+    "location": "Lusaka",
+    "cohort": "AI Coding Bootcamp Cohort 1",
+    "total_grade": null
+  },
+  "double_weighted_categories": [
+    "Frontend Implementation",
+    "Backend / API",
+    "Quality & Testing",
+    "Security",
+    "Architecture & Code Organization"
+  ],
+  "single_weighted_categories": [
+    "Design",
+    "Dev Ex, CI/CD",
+    "IT Ops",
+    "Product Management"
+  ],
+  "grading": {
+    "Design (UI/UX)": {
+      "score": 4,
+      "reasoning": {
+        "positive": [
+          "Comprehensive glassmorphism design with gradient backgrounds across all pages",
+          "Consistent visual design system implemented with centralized color scheme (color-scheme.json)",
+          "Responsive design with mobile-first approach using Tailwind CSS breakpoints",
+          "Beautiful visual hierarchy with animated background elements (DashboardPage.tsx, TrackPage.tsx, AnalyticsPage.tsx)",
+          "Custom theming system with theme variables (ThemeProvider.tsx, theme.ts)",
+          "Accessibility testing implemented (LoginPage.a11y.test.tsx with jest-axe)",
+          "Modern glassmorphism containers with backdrop blur effects",
+          "Thoughtful spacing and layout consistency across all components"
+        ],
+        "negative": [
+          "No formal a11y audit results visible in the codebase",
+          "Limited screen-reader flow testing in E2E tests",
+          "No documented color contrast ratios for accessibility compliance",
+          "Motion/interaction polish could be enhanced with more micro-interactions"
+        ],
+        "files_referenced": [
+          "apps/web/src/lib/theme.ts",
+          "apps/web/src/components/ui/ThemeProvider.tsx",
+          "apps/web/src/pages/DashboardPage.tsx",
+          "apps/web/src/pages/LoginPage.tsx",
+          "apps/web/color-scheme.json",
+          "apps/web/src/pages/LoginPage.a11y.test.tsx"
+        ]
+      }
+    },
+    "Frontend Implementation": {
+      "score": 4,
+      "reasoning": {
+        "positive": [
+          "Clean modular components organized by feature (components/auth, components/dashboard, etc.)",
+          "State management via TanStack Query (QueryProvider.tsx)",
+          "Form handling with React Hook Form and Zod validation",
+          "Lazy loading implemented for route components (App.tsx lines 16-24)",
+          "Performance optimizations with code-splitting via Suspense",
+          "Error boundaries implemented (ErrorBoundary.tsx)",
+          "Loading states throughout with LoadingSpinner",
+          "Toast notifications for user feedback",
+          "Well-typed with TypeScript throughout",
+          "React 18 with proper hooks usage",
+          "Security provider for CSP headers"
+        ],
+        "negative": [
+          "No SSR/SEO optimization implemented (this is a SPA)",
+          "No Lighthouse score report found in repository",
+          "Limited use of React.memo for component optimization",
+          "Could benefit from more granular code-splitting",
+          "No exhaustive error state handling for all API failures"
+        ],
+        "files_referenced": [
+          "apps/web/src/App.tsx",
+          "apps/web/src/providers/QueryProvider.tsx",
+          "apps/web/src/components/ui/ErrorBoundary.tsx",
+          "apps/web/src/components/ui/LoadingSpinner.tsx",
+          "apps/web/src/components/ui/Toast.tsx"
+        ]
+      }
+    },
+    "Backend / API": {
+      "score": 3,
+      "reasoning": {
+        "positive": [
+          "Express.js with TypeScript implementation",
+          "Zod validation middleware for request validation (functions/src/middleware/validation.ts)",
+          "JWT authentication middleware (functions/src/middleware/auth.ts)",
+          "Proper database indexes on Prisma schema (schema.prisma lines 41-44, 60-61, 74, 88-89)",
+          "Security middleware: Helmet for security headers, CORS configuration",
+          "Error handling middleware implemented",
+          "Health check endpoint",
+          "Type-safe Prisma ORM usage"
+        ],
+        "negative": [
+          "No multi-environment configuration visible (only basic .env setup)",
+          "No seeding scripts visible (seed.ts file exists but wasn't evaluated)",
+          "No zero-downtime migration strategy documented",
+          "Basic error handling without graceful failure patterns",
+          "No blue-green deployment configuration",
+          "JWT secret hardcoded as fallback ('your-secret-key')",
+          "Authentication middleware uses hardcoded secret fallback"
+        ],
+        "files_referenced": [
+          "functions/src/index.ts",
+          "functions/src/middleware/auth.ts",
+          "functions/src/middleware/validation.ts",
+          "functions/src/routers/workout.router.ts",
+          "prisma/schema.prisma"
+        ]
+      }
+    },
+    "Dev Experience & CI/CD": {
+      "score": 4,
+      "reasoning": {
+        "positive": [
+          "Comprehensive CI/CD pipeline with GitHub Actions (.github/workflows/ci.yml)",
+          "Parallel jobs: lint-and-typecheck, test-unit, e2e-tests, build",
+          "Codecov integration for coverage reporting",
+          "Prettier format checking in CI",
+          "ESLint configured for code quality",
+          "Type checking (tsc --noEmit)",
+          "Playwright E2E tests in CI pipeline",
+          "Preview deployments for pull requests",
+          "Production deployment automation for main branch",
+          "Turbo-cached pipeline mentioned in ADR (though not using Turborepo)"
+        ],
+        "negative": [
+          "Pipeline runtime not documented, may not meet <5 min threshold",
+          "No test reports/artifacts upload visible beyond coverage",
+          "No Changesets or automated versioning visible",
+          "Cache-aware optimizations not explicitly documented",
+          "No Slack/Discord notification integration mentioned",
+          "No rollback procedure automation"
+        ],
+        "files_referenced": [
+          ".github/workflows/ci.yml",
+          "apps/web/package.json",
+          "apps/web/vitest.config.ts",
+          "docs/adr/001-technology-stack.md"
+        ]
+      }
+    },
+    "Cloud / IT Ops": {
+      "score": 3,
+      "reasoning": {
+        "positive": [
+          "Sentry integration for error tracking and monitoring (apps/web/src/lib/monitoring.ts)",
+          "Comprehensive monitoring setup with performance tracking",
+          "Firebase hosting configuration (firebase.json)",
+          "Production deployment documentation (docs/PRODUCTION_DEPLOYMENT.md)",
+          "Monitoring documentation (docs/MONITORING.md)",
+          "Security headers configured in index.ts",
+          "Environment variable management via secrets",
+          "Rate limiting implementation in security.ts"
+        ],
+        "negative": [
+          "No Infrastructure as Code (Terraform/CloudFormation)",
+          "No autoscaling configuration visible",
+          "No custom metrics dashboard setup visible",
+          "No cost budgets or alerting on infra costs",
+          "Sentry DSN requires environment configuration (not automatic)"
+        ],
+        "files_referenced": [
+          "apps/web/src/lib/monitoring.ts",
+          "apps/web/src/main.tsx",
+          "firebase.json",
+          "docs/PRODUCTION_DEPLOYMENT.md",
+          "docs/MONITORING.md",
+          "functions/src/index.ts"
+        ]
+      }
+    },
+    "Product Management": {
+      "score": 3,
+      "reasoning": {
+        "positive": [
+          "Clear MVP scope defined in README with 7 distinct phases",
+          "Comprehensive feature list: Authentication, Workout Plans, Tracking, Goals, Records, Analytics",
+          "Well-organized project structure following monorepo pattern",
+          "Clear documentation in README with features and tech stack"
+        ],
+        "negative": [
+          "No explicit backlog grooming artifacts visible",
+          "No roadmap with milestones documented",
+          "No burn-down chart or sprint tracking visible",
+          "No stakeholder demo documentation",
+          "No data-driven decision making artifacts",
+          "No retro action items documented",
+          "No public changelog"
+        ],
+        "files_referenced": [
+          "README.md",
+          "fitness-tracker-v2/apps/web/package.json (scripts)"
+        ]
+      }
+    },
+    "Quality & Testing": {
+      "score": 3,
+      "reasoning": {
+        "positive": [
+          "Vitest configured with 60% coverage thresholds",
+          "Playwright E2E tests covering authentication and navigation",
+          "Unit tests for security functions (apps/web/src/lib/security.test.ts)",
+          "Component tests for LoginPage and PlansPage",
+          "Accessibility tests with jest-axe (LoginPage.a11y.test.tsx)",
+          "ESLint and Prettier configured and checked in CI",
+          "Comprehensive test setup (src/test/setup.ts with 111 lines)",
+          "Coverage thresholds set to 60% for lines, functions, branches, statements"
+        ],
+        "negative": [
+          "Coverage data not available to confirm ≥60% threshold met",
+          "No visual regression testing via Storybook",
+          "No mutation or property-based tests",
+          "No contract or fuzz tests",
+          "No zero-regression policy documented",
+          "E2E test reports show some failures (playwright-report indicates issues)"
+        ],
+        "files_referenced": [
+          "apps/web/vitest.config.ts",
+          "apps/web/src/test/setup.ts",
+          "apps/web/src/lib/security.test.ts",
+          "apps/web/src/pages/LoginPage.test.tsx",
+          "apps/web/src/pages/PlansPage.test.tsx",
+          "apps/web/src/pages/LoginPage.a11y.test.tsx",
+          "e2e/tests/auth.spec.ts",
+          "e2e/tests/navigation.spec.ts",
+          "e2e/tests/plans.spec.ts"
+        ]
+      }
+    },
+    "Security": {
+      "score": 4,
+      "reasoning": {
+        "positive": [
+          "Comprehensive security utilities (apps/web/src/lib/security.ts - 320 lines)",
+          "XSS protection with input sanitization",
+          "CSRF token generation and validation",
+          "Password validation with strength requirements",
+          "Rate limiting implementation",
+          "Content Security Policy headers configured",
+          "Security headers: X-Frame-Options, X-Content-Type-Options, etc.",
+          "File upload validation (size and type checking)",
+          "Security ADRs documented (docs/adr/003-security-architecture.md)",
+          "OWASP top-10 consideration evident in code",
+          "Secrets management via environment variables",
+          "JWT authentication implemented",
+          "Helmet middleware for security headers in backend"
+        ],
+        "negative": [
+          "No automated security tests (ZAP/GitHub Dependabot) visible",
+          "No 2FA enforcement visible on repository",
+          "No threat model documented beyond ADR",
+          "No periodic penetration test results",
+          "JWT secret fallback is insecure ('your-secret-key')",
+          "Dependency scanning not visibly configured"
+        ],
+        "files_referenced": [
+          "apps/web/src/lib/security.ts",
+          "apps/web/src/lib/security.test.ts",
+          "functions/src/middleware/auth.ts",
+          "functions/src/index.ts",
+          "docs/adr/003-security-architecture.md",
+          "Doc/SECURITY.md"
+        ]
+      }
+    },
+    "Architecture & Code Organization": {
+      "score": 4,
+      "reasoning": {
+        "positive": [
+          "Clean monorepo structure with apps/, packages/, e2e/ separation",
+          "Shared package for types and schemas (packages/shared/src/schemas/)",
+          "Multiple ADRs documented (docs/adr/ - 4 files)",
+          "Clear domain boundaries: Auth, Plans, Tracking, Goals, Records, Analytics",
+          "Decoupled modules with clear separation",
+          "Well-organized feature-based component structure",
+          "Type-safe shared schemas with Zod",
+          "Clear separation of concerns: components, pages, hooks, lib",
+          "Documentation well-organized in docs/ and Doc/ folders",
+          "Clean router organization in functions/src/routers/"
+        ],
+        "negative": [
+          "No hexagonal architecture or CQRS patterns evident",
+          "No plug-in architecture",
+          "Some code duplication across pages (background elements repeated)",
+          "ADR trail could be more exhaustive for all major decisions"
+        ],
+        "files_referenced": [
+          "apps/web/src/App.tsx",
+          "apps/web/src/components/",
+          "packages/shared/src/schemas/",
+          "docs/adr/001-technology-stack.md",
+          "docs/adr/002-database-schema.md",
+          "docs/adr/003-security-architecture.md",
+          "docs/adr/004-testing-strategy.md",
+          "functions/src/routers/"
+        ]
+      }
+    }
+  },
+  "score_calculation": {
+    "double_weighted": {
+      "Frontend Implementation": 4,
+      "Backend / API": 3,
+      "Quality & Testing": 3,
+      "Security": 4,
+      "Architecture & Code Organization": 4
+    },
+    "single_weighted": {
+      "Design (UI/UX)": 4,
+      "Dev Ex, CI/CD": 4,
+      "Cloud / IT Ops": 3,
+      "Product Management": 3
+    },
+    "calculation": "(4*2 + 3*2 + 3*2 + 4*2 + 4*2) + (4 + 4 + 3 + 3) = (8 + 6 + 6 + 8 + 8) + 14 = 36 + 14 = 50",
+    "percentage": "50 / (5*2*5 + 5*4) * 100 = 50 / 70 * 100 = 71.4%",
+    "grade_letter": "B"
+  },
+  "final_grade": {
+    "total_points": 50,
+    "max_points": 70,
+    "percentage": 71.4,
+    "letter_grade": "B"
+  }
+}
+
